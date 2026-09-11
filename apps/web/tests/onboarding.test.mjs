@@ -46,7 +46,7 @@ describe("assinatura de trial no onboarding", () => {
     const diasDeTrial =
       (subscription.currentPeriodEnd.getTime() - subscription.currentPeriodStart.getTime()) /
       86_400_000;
-    assert.equal(Math.round(diasDeTrial), 14);
+    assert.equal(Math.round(diasDeTrial), 7);
 
     await prisma.barbershop.deleteMany({ where: { id: result.barbershopId } });
   });

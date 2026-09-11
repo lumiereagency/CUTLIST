@@ -48,7 +48,7 @@ export interface SignUpResult {
 /// Dias de trial no Pro para toda barbearia nova (decisão registrada em
 /// docs/design-part4.md: nasce em TRIALING no Pro, não no Base, para dar
 /// acesso completo à Agenda Inteligente e aos relatórios desde o início).
-const TRIAL_DAYS = 14;
+const TRIAL_DAYS = 7;
 
 /// Slug livre a partir de uma base. A corrida com outro cadastro simultâneo é
 /// resolvida pela constraint de unicidade, não por esta consulta — aqui só
