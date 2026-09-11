@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { can, buildPixCopyPaste, paymentReportMessage } from "@barber/domain";
-import { billingGate } from "@barber/entitlements";
+import { activePlans, billingGate } from "@barber/entitlements";
 import { getSession } from "@/lib/auth";
 import { BillingPaywall } from "@/components/billing-paywall";
 import { DashboardNav, type DashboardNavItem } from "@/components/dashboard-nav";
@@ -24,34 +24,39 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (gate?.blocked) {
     const pixKey = process.env.PIX_KEY;
     const companyWhatsapp = process.env.COMPANY_WHATSAPP_NUMBER;
-    if (pixKey && companyWhatsapp) {
-      const pixCode = buildPixCopyPaste({
-        pixKey,
-        merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
-        merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
-        amountMinor: gate.priceMinor,
-        txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
-      });
-      const whatsappLink = paymentReportMessage({
-        companyWhatsappPhone: companyWhatsapp,
-        barbershopName: session.barbershopName,
-        planName: gate.planName,
-      });
+    const plans = pixKey && companyWhatsapp ? await activePlans() : [];
+    if (pixKey && companyWhatsapp && plans.length > 0) {
+      const planOptions = plans.map((plan) => ({
+        code: plan.code,
+        name: plan.name,
+        amountLabel: money(plan.priceMinor),
+        pixCode: buildPixCopyPaste({
+          pixKey,
+          merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
+          merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
+          amountMinor: plan.priceMinor,
+          txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
+        }),
+        whatsappLink: paymentReportMessage({
+          companyWhatsappPhone: companyWhatsapp,
+          barbershopName: session.barbershopName,
+          planName: plan.name,
+        }),
+      }));
 
       return (
         <BillingPaywall
           shopName={session.barbershopName}
-          planName={gate.planName}
-          amountLabel={money(gate.priceMinor)}
-          pixCode={pixCode}
-          whatsappLink={whatsappLink}
+          plans={planOptions}
+          selectedPlanCode={gate.planCode}
           alreadyReported={Boolean(gate.paymentReportedAt)}
         />
       );
     }
-    // PIX_KEY/COMPANY_WHATSAPP_NUMBER não configurados: não trava o cliente
-    // por uma falha de configuração nossa — loga alto e deixa passar.
-    console.error("[billing-gate] cobrança bloqueada mas PIX_KEY/COMPANY_WHATSAPP_NUMBER ausentes");
+    // PIX_KEY/COMPANY_WHATSAPP_NUMBER ausentes, ou nenhum plano ativo: não
+    // trava o cliente por uma falha de configuração ou dado nossa — loga
+    // alto e deixa passar.
+    console.error("[billing-gate] cobrança bloqueada mas faltou config (PIX_KEY/COMPANY_WHATSAPP_NUMBER) ou plano ativo");
   }
 
   const nav: Array<DashboardNavItem & { permission: Parameters<typeof can>[1] }> = [

@@ -139,7 +139,7 @@ export default function HomePage() {
         </Reveal>
       </section>
 
-      <section className="relative px-5 py-20 sm:py-28">
+      <section className="relative overflow-hidden px-5 py-20 sm:py-28">
         <Glow className="right-0 top-1/4 h-[420px] w-[420px] translate-x-1/3 opacity-40" tone="soft" />
         <div className="relative mx-auto max-w-5xl">
           <Reveal>
@@ -191,7 +191,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative px-5 py-20 sm:py-28">
+      <section className="relative overflow-hidden px-5 py-20 sm:py-28">
         <Glow className="left-1/2 top-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 opacity-50" />
         <Reveal className="relative mx-auto max-w-2xl overflow-hidden rounded-3xl bg-brand-gradient p-10 text-center shadow-[0_40px_80px_-24px_rgba(255,90,31,0.5)] sm:p-14">
           <div
