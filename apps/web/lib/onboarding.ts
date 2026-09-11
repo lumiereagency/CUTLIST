@@ -46,7 +46,7 @@ export interface SignUpResult {
 }
 
 /// Dias de trial no Pro para toda barbearia nova (decisão registrada em
-/// docs/design-part4.md: nasce em TRIALING no Pro, não no Essencial, para dar
+/// docs/design-part4.md: nasce em TRIALING no Pro, não no Base, para dar
 /// acesso completo à Agenda Inteligente e aos relatórios desde o início).
 const TRIAL_DAYS = 14;
 

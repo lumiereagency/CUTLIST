@@ -1,25 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  BarChart3,
-  CalendarDays,
-  House,
-  LogOut,
-  Settings,
-  Link as LinkIcon,
-  Scissors,
-  Sparkles,
-  UserRound,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
 import { can, buildPixCopyPaste, paymentReportMessage } from "@barber/domain";
 import { billingGate } from "@barber/entitlements";
 import { getSession } from "@/lib/auth";
-import { signOut } from "../(auth)/actions";
-import { BrandMark } from "@/components/brand-mark";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { BillingPaywall } from "@/components/billing-paywall";
+import { DashboardNav, type DashboardNavItem } from "@/components/dashboard-nav";
 import { PRODUCT_NAME } from "@barber/config";
 
 const money = (minor: number) =>
@@ -70,76 +54,48 @@ export default async function DashboardLayout({ children }: { children: React.Re
     console.error("[billing-gate] cobrança bloqueada mas PIX_KEY/COMPANY_WHATSAPP_NUMBER ausentes");
   }
 
-  const nav: Array<{ href: string; label: string; icon: LucideIcon; permission: Parameters<typeof can>[1] }> = [
-    { href: "/hoje", label: "Hoje", icon: House, permission: "appointments.read.own" as const },
-    { href: "/agenda", label: "Agenda", icon: CalendarDays, permission: "appointments.read.own" as const },
-    { href: "/clientes", label: "Clientes", icon: UserRound, permission: "customers.read" as const },
+  const nav: Array<DashboardNavItem & { permission: Parameters<typeof can>[1] }> = [
+    { href: "/hoje", label: "Hoje", iconKey: "hoje", permission: "appointments.read.own" as const },
+    { href: "/agenda", label: "Agenda", iconKey: "agenda", permission: "appointments.read.own" as const },
+    { href: "/clientes", label: "Clientes", iconKey: "clientes", permission: "customers.read" as const },
     {
       href: "/agenda-inteligente",
       label: "Agenda Inteligente",
-      icon: Sparkles,
+      iconKey: "agenda-inteligente",
       permission: "smart_agenda.read" as const,
     },
     {
       href: "/relatorios",
       label: "Relatórios",
-      icon: BarChart3,
+      iconKey: "relatorios",
       permission: "reports.advanced.read" as const,
     },
-    { href: "/equipe", label: "Equipe", icon: Users, permission: "professionals.read" as const },
-    { href: "/gestao/servicos", label: "Serviços", icon: Scissors, permission: "services.read" as const },
-    { href: "/gestao/integracoes", label: "Integrações", icon: LinkIcon, permission: "integrations.read" as const },
+    { href: "/equipe", label: "Equipe", iconKey: "equipe", permission: "professionals.read" as const },
+    { href: "/gestao/servicos", label: "Serviços", iconKey: "servicos", permission: "services.read" as const },
+    {
+      href: "/gestao/integracoes",
+      label: "Integrações",
+      iconKey: "integracoes",
+      permission: "integrations.read" as const,
+    },
     {
       href: "/gestao/configuracoes",
       label: "Configurações",
-      icon: Settings,
+      iconKey: "configuracoes",
       permission: "barbershop.settings.read" as const,
     },
   ].filter((item) => can(session.membership, item.permission));
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="border-b border-line-subtle bg-surface-1">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <BrandMark className="h-6 w-6 shrink-0 text-brand-500" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-ink">{session.barbershopName}</p>
-            <p className="truncate text-xs text-ink-secondary">{session.userName}</p>
-          </div>
-          <ThemeToggle />
-          <form action={signOut}>
-            <button
-              type="submit"
-              aria-label="Sair"
-              title="Sair"
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-secondary hover:bg-surface-2 hover:text-ink"
-            >
-              <LogOut size={17} strokeWidth={1.9} />
-            </button>
-          </form>
-        </div>
-
-        <nav className="mx-auto max-w-3xl overflow-x-auto px-5">
-          <ul className="flex gap-1 pb-3">
-            {nav.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-sm text-ink-secondary hover:bg-surface-2 hover:text-ink"
-                  >
-                    <Icon size={16} strokeWidth={1.9} />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-5 py-6">{children}</main>
+    <div className="min-h-screen bg-canvas lg:flex">
+      <DashboardNav
+        items={nav.map(({ href, label, iconKey }) => ({ href, label, iconKey }))}
+        shopName={session.barbershopName}
+        userName={session.userName}
+      />
+      <div className="flex-1 lg:pl-64">
+        <main className="mx-auto max-w-3xl px-5 py-6">{children}</main>
+      </div>
     </div>
   );
 }
