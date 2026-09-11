@@ -73,7 +73,28 @@ model PlatformAdminUser {
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  sessions PlatformAdminSession[]
+
   @@map("platform_admin_users")
+}
+
+/// Sessão do admin da plataforma — namespace de autorização separado do da
+/// equipe (mesmo motivo do PlatformAdminUser): nunca compartilha cookie nem
+/// tabela com UserSession, pra um vazamento de um lado nunca virar acesso do
+/// outro.
+model PlatformAdminSession {
+  id      String            @id @default(uuid()) @db.Uuid
+  adminId String            @map("admin_id") @db.Uuid
+  admin   PlatformAdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  tokenHash String @unique @map("token_hash")
+
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([adminId])
+  @@map("platform_admin_sessions")
 }
 
 model Coupon {
@@ -175,13 +196,19 @@ model Subscription {
   plan         Plan       @relation(fields: [planId], references: [id])
 
   status             SubscriptionStatus @default(TRIALING)
-  /// Provedor de cobrança — adapter plugável (§19 #3)
+  /// Provedor de cobrança — adapter plugável (§19 #3). "manual_pix" enquanto
+  /// não há gateway integrado: confirmação é humana, via /plataforma.
   provider           String?
   externalCustomerId String?            @map("external_customer_id")
   externalSubscriptionId String?        @map("external_subscription_id")
   currentPeriodStart DateTime?          @map("current_period_start") @db.Timestamptz(3)
   currentPeriodEnd   DateTime?          @map("current_period_end") @db.Timestamptz(3)
   cancelledAt        DateTime?          @map("cancelled_at") @db.Timestamptz(3)
+
+  /// Cliente clicou em "já fiz o Pix" — não confirma o pagamento (isso só
+  /// acontece quando o admin da plataforma confere e libera), só prioriza a
+  /// fila de conferência e evita o cliente clicar várias vezes.
+  paymentReportedAt DateTime? @map("payment_reported_at") @db.Timestamptz(3)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

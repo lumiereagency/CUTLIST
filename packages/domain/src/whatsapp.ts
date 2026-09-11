@@ -69,3 +69,18 @@ export function comeBackMessage(context: WhatsappContext & { daysSinceLastVisit:
       `na ${context.shopName}. Quer marcar um horário?`
   );
 }
+
+/// Direção oposta das demais: é a barbearia falando com a empresa, avisando
+/// que fez o Pix da assinatura. Enquanto não há gateway integrado (§19 #3),
+/// é assim que a fila de conferência manual em /plataforma fica sabendo.
+export function paymentReportMessage(context: {
+  companyWhatsappPhone: string;
+  barbershopName: string;
+  planName: string;
+}): string {
+  return link(
+    context.companyWhatsappPhone,
+    `Olá! Sou a ${context.barbershopName} e acabei de efetuar o pagamento do plano ${context.planName}. ` +
+      `Poderiam checar o recibo e liberar o acesso?`
+  );
+}

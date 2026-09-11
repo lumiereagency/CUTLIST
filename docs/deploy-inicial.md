@@ -76,6 +76,15 @@ ENCRYPTION_KEY=<gerado no passo 2>
 # Teste interno: aceito explicitamente. Nunca para cliente real — ver
 # apps/web/lib/messaging.ts. Sem isto, o boot falha em NODE_ENV=production.
 SMS_PROVIDER=log
+
+# Cobrança manual via Pix — enquanto não há gateway integrado (§19 #3), é
+# assim que o paywall do painel gera o código de pagamento e o botão "já fiz
+# o Pix" monta a mensagem de WhatsApp pra equipe conferir. Sem estas quatro,
+# o gate loga erro e libera o cliente (nunca trava por falha de config nossa).
+PIX_KEY=<chave Pix que recebe a assinatura — CPF/CNPJ, e-mail, telefone ou aleatória>
+PIX_MERCHANT_NAME=<nome do beneficiário exibido no Pix, sem acento>
+PIX_MERCHANT_CITY=<cidade do beneficiário, sem acento>
+COMPANY_WHATSAPP_NUMBER=<número com DDI+DDD que recebe o aviso de pagamento>
 ```
 
 `DATABASE_URL`/`REDIS_URL` apontam para `postgres`/`redis` porque esses são os
@@ -181,6 +190,21 @@ docker run --rm --network barber_internal --env-file .env.prod \
 (`barber_internal` é o nome que o Compose dá à rede `internal` deste projeto
 — confirme com `docker network ls` se o nome do projeto não for `barber`.)
 
+## 5b. Criar o admin da plataforma
+
+Sem isto, `/plataforma/entrar` não deixa ninguém entrar — não existe cadastro
+público de admin de propósito, é acesso a todo cliente cadastrado. Roda uma
+vez, reaproveitando a mesma imagem `barber-migrate` do passo anterior:
+
+```bash
+docker run --rm --network barber_internal --env-file .env.prod \
+  barber-migrate node packages/db/scripts/create-platform-admin.mjs \
+  "Seu Nome" "seu-email@empresa.com" "senha-forte-aqui"
+```
+
+Rodar de novo com o mesmo e-mail troca a senha (é upsert) — útil se perder o
+acesso. A senha exigida é a mesma regra do login da equipe: 10+ caracteres.
+
 ## 6. Verificar
 
 ```bash
@@ -189,6 +213,23 @@ curl -s https://app.seudominio.com/api/health   # {"status":"ok"}
 
 Depois, pelo navegador: `/criar-conta` cria a conta e a barbearia. Não precisa
 semear nada — a barbearia criada já nasce com um período de teste (Marco 6.1).
+
+## 7. Cobrança manual via Pix — como funciona no dia a dia
+
+Enquanto não há gateway integrado (Marco 7), a renovação é assim:
+
+1. Quando a assinatura de uma barbearia não dá mais acesso (trial vencido,
+   `PAST_DUE` ou `CANCELED`), o painel inteiro dela vira uma tela obrigatória
+   de pagamento com o código Pix (copia e cola, valor já certo) — ela não
+   acessa mais nada até isso ser resolvido.
+2. A barbearia paga e clica em "Já fiz o Pix" — isso abre o WhatsApp dela com
+   uma mensagem pronta pro número em `COMPANY_WHATSAPP_NUMBER`, e marca no
+   banco que ela avisou (só prioriza a fila, não libera sozinho).
+3. Você confere o Pix recebido no extrato do banco e entra em
+   `https://app.seudominio.com/plataforma/entrar` com o admin criado no passo
+   5b. A barbearia que avisou aparece destacada no topo da lista.
+4. Clicar em "Confirmar pagamento" reativa a assinatura por mais 30 dias — é
+   a única forma de liberar; não existe confirmação automática.
 
 ## O que isto NÃO libera
 

@@ -11,7 +11,8 @@
     "studio": "dotenv -e ../../.env -- prisma studio",
     "psql": "dotenv -e ../../.env -- prisma db execute --stdin",
     "typecheck": "tsc --noEmit",
-    "test:guarantees": "dotenv -e ../../.env -- node tests/guarantees.test.mjs"
+    "test:guarantees": "dotenv -e ../../.env -- node tests/guarantees.test.mjs",
+    "create-admin": "dotenv -e ../../.env -- node scripts/create-platform-admin.mjs"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"

@@ -13,11 +13,17 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { can } from "@barber/domain";
+import { can, buildPixCopyPaste, paymentReportMessage } from "@barber/domain";
+import { billingGate } from "@barber/entitlements";
 import { getSession } from "@/lib/auth";
 import { signOut } from "../(auth)/actions";
 import { BrandMark } from "@/components/brand-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BillingPaywall } from "@/components/billing-paywall";
+import { PRODUCT_NAME } from "@barber/config";
+
+const money = (minor: number) =>
+  (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +33,42 @@ export const dynamic = "force-dynamic";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/entrar");
+
+  // Bloqueio de cobrança (§19 #3) vem antes de qualquer outra coisa: sem
+  // acesso pago, nada do resto do painel deveria renderizar.
+  const gate = await billingGate(session.barbershopId);
+  if (gate?.blocked) {
+    const pixKey = process.env.PIX_KEY;
+    const companyWhatsapp = process.env.COMPANY_WHATSAPP_NUMBER;
+    if (pixKey && companyWhatsapp) {
+      const pixCode = buildPixCopyPaste({
+        pixKey,
+        merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
+        merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
+        amountMinor: gate.priceMinor,
+        txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
+      });
+      const whatsappLink = paymentReportMessage({
+        companyWhatsappPhone: companyWhatsapp,
+        barbershopName: session.barbershopName,
+        planName: gate.planName,
+      });
+
+      return (
+        <BillingPaywall
+          shopName={session.barbershopName}
+          planName={gate.planName}
+          amountLabel={money(gate.priceMinor)}
+          pixCode={pixCode}
+          whatsappLink={whatsappLink}
+          alreadyReported={Boolean(gate.paymentReportedAt)}
+        />
+      );
+    }
+    // PIX_KEY/COMPANY_WHATSAPP_NUMBER não configurados: não trava o cliente
+    // por uma falha de configuração nossa — loga alto e deixa passar.
+    console.error("[billing-gate] cobrança bloqueada mas PIX_KEY/COMPANY_WHATSAPP_NUMBER ausentes");
+  }
 
   const nav: Array<{ href: string; label: string; icon: LucideIcon; permission: Parameters<typeof can>[1] }> = [
     { href: "/hoje", label: "Hoje", icon: House, permission: "appointments.read.own" as const },
