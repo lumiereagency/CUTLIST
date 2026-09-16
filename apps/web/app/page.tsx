@@ -109,7 +109,7 @@ export default function HomePage() {
         <Reveal className="relative mx-auto max-w-2xl text-center">
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-line-subtle bg-surface-1/80 px-3.5 py-1.5 text-xs font-medium text-ink-secondary">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-            Feito para negócios de agendamento que querem crescer sem bagunça
+            Feito para negócios de agenda cheia que querem crescer sem bagunça
           </div>
           <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-5xl">
             O sistema completo pra seu negócio parar de{" "}

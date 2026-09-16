@@ -41,6 +41,7 @@ export default async function BookingPage({
 
       <BookingWizard
         slug={shop.slug}
+        shopName={shop.name}
         services={shop.services.map((service) => ({
           id: service.id,
           name: service.name,

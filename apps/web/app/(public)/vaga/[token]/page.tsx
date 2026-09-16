@@ -70,6 +70,7 @@ export default async function SmartOpportunityPage({ params }: { params: { token
         <div className="relative mt-6">
           <VagaClaimForm
             token={params.token}
+            shopName={shop.name}
             services={services.map((service) => ({
               id: service.id,
               name: service.name,
@@ -81,7 +82,7 @@ export default async function SmartOpportunityPage({ params }: { params: { token
       ) : (
         <p className="relative mt-6 text-sm text-ink-secondary">
           Essa vaga já foi preenchida ou o horário passou. Você ainda pode agendar um novo horário
-          direto com a {shop.name}.
+          direto com {shop.name}.
         </p>
       )}
     </main>

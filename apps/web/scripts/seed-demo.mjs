@@ -15,7 +15,7 @@ const pro2 = await prisma.professional.create({
   data: { barbershopId: shop.id, displayName: "Rafael", bookingPriority: 2 },
 });
 const corte = await prisma.service.create({
-  data: { barbershopId: shop.id, name: "Atendimento Padrão", priceMinor: 5000, durationMinutes: 30, bufferAfterMinutes: 10, publicOrder: 1 },
+  data: { barbershopId: shop.id, name: "Atendimento Essencial", priceMinor: 5000, durationMinutes: 30, bufferAfterMinutes: 10, publicOrder: 1 },
 });
 const combo = await prisma.service.create({
   data: { barbershopId: shop.id, name: "Atendimento Completo", priceMinor: 8000, durationMinutes: 60, bufferAfterMinutes: 10, publicOrder: 2 },

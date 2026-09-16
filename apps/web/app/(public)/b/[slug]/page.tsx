@@ -40,7 +40,7 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
 
         {shop.services.length === 0 ? (
           <p className="rounded-lg bg-canvas p-4 text-sm text-ink-secondary">
-            Este negócio ainda não publicou seus serviços.
+            Ainda não há serviços publicados por aqui.
           </p>
         ) : (
           <ul className="space-y-3">

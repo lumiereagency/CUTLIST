@@ -211,7 +211,7 @@ export async function saveBarbershop(
   const session = await requirePermission("barbershop.settings.write");
 
   const name = String(formData.get("name") ?? "").trim();
-  if (name.length < 2) return { error: "Dê um nome ao negócio." };
+  if (name.length < 2) return { error: "Escolha um nome para o negócio." };
 
   const desiredSlug = slugify(String(formData.get("slug") ?? ""));
   if (!desiredSlug || !isValidSlug(desiredSlug)) {

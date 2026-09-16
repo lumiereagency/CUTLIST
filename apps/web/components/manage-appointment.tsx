@@ -11,12 +11,14 @@ export function ManageActions({
   canCancel,
   blockedReason,
   shopPhone,
+  shopName,
   whatsappText,
 }: {
   token: string;
   canCancel: boolean;
   blockedReason: string | null;
   shopPhone: string | null;
+  shopName: string;
   whatsappText: string;
 }) {
   const router = useRouter();
@@ -105,7 +107,7 @@ export function ManageActions({
           rel="noreferrer"
           className="block rounded-lg border border-line-subtle px-4 py-3 text-center font-medium text-ink"
         >
-          Falar com o estabelecimento
+          Falar com {shopName}
         </a>
       ) : null}
     </div>

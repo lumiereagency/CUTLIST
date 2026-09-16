@@ -41,7 +41,15 @@ const formatDayLabel = (isoDate: string) =>
     month: "long",
   });
 
-export function VagaClaimForm({ token, services }: { token: string; services: VagaService[] }) {
+export function VagaClaimForm({
+  token,
+  shopName,
+  services,
+}: {
+  token: string;
+  shopName: string;
+  services: VagaService[];
+}) {
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -123,7 +131,7 @@ export function VagaClaimForm({ token, services }: { token: string; services: Va
     return (
       <p className="rounded-lg bg-warning/12 p-4 text-sm text-warning">
         Essa vaga acabou de ser preenchida por outra pessoa. Você ainda pode ver os horários
-        normais de agendamento com o estabelecimento.
+        normais de agendamento com {shopName}.
       </p>
     );
   }

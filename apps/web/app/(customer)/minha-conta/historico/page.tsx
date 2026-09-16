@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: "Atendido",
   NO_SHOW: "Não compareceu",
   CANCELLED_BY_CUSTOMER: "Cancelado por você",
-  CANCELLED_BY_SHOP: "Cancelado pelo estabelecimento",
+  CANCELLED_BY_SHOP: "Cancelado pela equipe",
   RESCHEDULED: "Remarcado",
   CONFIRMED: "Confirmado",
 };
