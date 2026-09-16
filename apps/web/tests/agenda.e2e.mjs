@@ -56,11 +56,11 @@ before(async () => {
 
   // Configura a barbearia pela interface, como o dono faria
   await page.goto(`${BASE_URL}/criar-conta`, { waitUntil: "networkidle" });
-  await page.getByRole("textbox", { name: "Nome da barbearia" }).fill(NOME_BARBEARIA);
+  await page.getByRole("textbox", { name: "Nome do negócio" }).fill(NOME_BARBEARIA);
   await page.getByRole("textbox", { name: "Seu nome" }).fill("Dono");
   await page.getByRole("textbox", { name: "Seu e-mail" }).fill(EMAIL);
   await page.getByLabel("Senha").fill(SENHA);
-  await page.getByRole("button", { name: /Criar minha barbearia/ }).click();
+  await page.getByRole("button", { name: /Criar meu negócio/ }).click();
   await page.waitForURL(/\/hoje$/, { timeout: 20000 });
 
   await page.goto(`${BASE_URL}/gestao/servicos`, { waitUntil: "networkidle" });

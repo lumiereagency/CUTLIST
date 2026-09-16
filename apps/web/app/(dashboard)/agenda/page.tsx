@@ -38,7 +38,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   COMPLETED: { label: "Concluído", className: "bg-success/12 text-success" },
   NO_SHOW: { label: "Não veio", className: "bg-warning/12 text-warning" },
   CANCELLED_BY_CUSTOMER: { label: "Cancelado pelo cliente", className: "bg-surface-2 text-ink-secondary" },
-  CANCELLED_BY_SHOP: { label: "Cancelado pela barbearia", className: "bg-surface-2 text-ink-secondary" },
+  CANCELLED_BY_SHOP: { label: "Cancelado pelo estabelecimento", className: "bg-surface-2 text-ink-secondary" },
   RESCHEDULED: { label: "Remarcado", className: "bg-surface-2 text-ink-secondary" },
 };
 

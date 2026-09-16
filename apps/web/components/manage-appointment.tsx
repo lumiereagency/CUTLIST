@@ -105,7 +105,7 @@ export function ManageActions({
           rel="noreferrer"
           className="block rounded-lg border border-line-subtle px-4 py-3 text-center font-medium text-ink"
         >
-          Falar com a barbearia
+          Falar com o estabelecimento
         </a>
       ) : null}
     </div>

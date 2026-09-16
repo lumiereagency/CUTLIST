@@ -41,7 +41,7 @@ export async function signIn(_state: FormState, formData: FormData): Promise<For
 
   const membership = user.memberships[0];
   if (!membership) {
-    return { error: "Sua conta não está vinculada a nenhuma barbearia ativa." };
+    return { error: "Sua conta não está vinculada a nenhum negócio ativo." };
   }
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });

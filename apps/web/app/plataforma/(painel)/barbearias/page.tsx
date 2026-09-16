@@ -40,9 +40,9 @@ export default async function PlatformAdminBarbershopsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-xl font-semibold text-ink">Barbearias</h1>
+        <h1 className="text-xl font-semibold text-ink">Negócios</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Todas as barbearias cadastradas e o estado da assinatura de cada uma.
+          Todos os negócios cadastrados e o estado da assinatura de cada um.
         </p>
       </header>
 
@@ -68,7 +68,7 @@ export default async function PlatformAdminBarbershopsPage() {
       <section className="space-y-2">
         {subscriptions.length === 0 ? (
           <p className="rounded-xl bg-surface-1 p-6 text-center text-sm text-ink-secondary">
-            Nenhuma barbearia cadastrada ainda.
+            Nenhum negócio cadastrado ainda.
           </p>
         ) : (
           subscriptions.map((subscription) => {

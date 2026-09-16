@@ -48,7 +48,7 @@ export default async function TeamPage() {
         <div className="rounded-xl border border-dashed border-line-subtle bg-surface-1 p-6 text-center">
           <p className="font-medium text-ink">Nenhum profissional cadastrado</p>
           <p className="mt-1 text-sm text-ink-secondary">
-            Cadastre você mesmo, se atende, ou os barbeiros da sua equipe.
+            Cadastre você mesmo, se atende, ou os profissionais da sua equipe.
           </p>
         </div>
       ) : (

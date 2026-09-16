@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request, { params }: { params: { slug: string } }) {
   const shop = await resolveShopBySlug(params.slug);
-  if (!shop) return fail("NOT_FOUND", "Barbearia não encontrada");
+  if (!shop) return fail("NOT_FOUND", "Negócio não encontrado");
 
   const url = new URL(request.url);
   const parsed = availabilityQuery.safeParse({

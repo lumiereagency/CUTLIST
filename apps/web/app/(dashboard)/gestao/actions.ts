@@ -211,7 +211,7 @@ export async function saveBarbershop(
   const session = await requirePermission("barbershop.settings.write");
 
   const name = String(formData.get("name") ?? "").trim();
-  if (name.length < 2) return { error: "Dê um nome à barbearia." };
+  if (name.length < 2) return { error: "Dê um nome ao negócio." };
 
   const desiredSlug = slugify(String(formData.get("slug") ?? ""));
   if (!desiredSlug || !isValidSlug(desiredSlug)) {
@@ -243,7 +243,7 @@ export async function saveBarbershop(
     });
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {
-      return { error: "Este endereço de página já está em uso por outra barbearia." };
+      return { error: "Este endereço de página já está em uso por outro negócio." };
     }
     throw error;
   }

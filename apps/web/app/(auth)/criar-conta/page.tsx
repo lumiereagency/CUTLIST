@@ -28,7 +28,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-xl bg-brand-500 px-4 py-3 font-semibold text-ink-inverse transition-colors hover:bg-brand-400 active:bg-brand-600 disabled:opacity-50"
     >
-      {pending ? "Criando…" : "Criar minha barbearia"}
+      {pending ? "Criando…" : "Criar meu negócio"}
     </button>
   );
 }
@@ -52,7 +52,7 @@ export default function SignUpPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <BrandMark className="h-10 w-10 text-brand-500" />
           <p className="mt-3 text-sm font-semibold tracking-wide text-ink-secondary">{PRODUCT_NAME}</p>
-          <h1 className="mt-4 text-2xl font-semibold text-ink">Cadastre sua barbearia</h1>
+          <h1 className="mt-4 text-2xl font-semibold text-ink">Cadastre seu negócio</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Leva um minuto. Depois você configura serviços e horários.
           </p>
@@ -66,11 +66,11 @@ export default function SignUpPage() {
               </p>
             ) : null}
 
-            <Field label="Nome da barbearia" hint="É o nome que aparece na sua página de agendamento.">
+            <Field label="Nome do negócio" hint="É o nome que aparece na sua página de agendamento.">
               <input id="barbershopName" name="barbershopName" required className={inputClass} />
             </Field>
 
-            <Field label="Onde fica sua barbearia">
+            <Field label="Onde fica seu negócio">
               <select id="timezone" name="timezone" defaultValue="America/Sao_Paulo" className={inputClass}>
                 {TIMEZONES.map((zone) => (
                   <option key={zone.value} value={zone.value}>

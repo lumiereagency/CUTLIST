@@ -38,13 +38,13 @@ export default async function CustomerPreferencesPage() {
           Promoções
         </h2>
         <p className="mt-1 text-sm text-ink-secondary">
-          Cada barbearia é separada: aceitar em uma não vale para as outras. Avisos sobre seus
+          Cada negócio é separado: aceitar em um não vale para os outros. Avisos sobre seus
           próprios horários continuam chegando, independentemente disso.
         </p>
 
         {relations.length === 0 ? (
           <p className="mt-4 rounded-lg bg-canvas p-4 text-sm text-ink-secondary">
-            Você ainda não tem relação com nenhuma barbearia por aqui.
+            Você ainda não tem relação com nenhum negócio por aqui.
           </p>
         ) : (
           <div className="mt-4 space-y-4">
@@ -65,7 +65,7 @@ export default async function CustomerPreferencesPage() {
           Encerrar conta
         </h2>
         <p className="mt-1 text-sm text-ink-secondary">
-          Seus dados pessoais são removidos. Cada barbearia mantém o registro dos atendimentos
+          Seus dados pessoais são removidos. Cada negócio mantém o registro dos atendimentos
           que realizou, sem identificar você.
         </p>
         <div className="mt-4">

@@ -18,7 +18,7 @@ const FEATURES = [
   {
     icon: Link2,
     title: "Página de agendamento própria",
-    description: "Seu cliente marca o horário sozinho, a qualquer hora, pelo link da sua barbearia.",
+    description: "Seu cliente marca o horário sozinho, a qualquer hora, pelo link do seu negócio.",
   },
   {
     icon: CalendarDays,
@@ -43,14 +43,14 @@ const FEATURES = [
   {
     icon: Users,
     title: "Equipe com permissão certa",
-    description: "O barbeiro vê a própria agenda; o dono vê tudo. Cada um enxerga só o que precisa.",
+    description: "O profissional vê a própria agenda; o dono vê tudo. Cada um enxerga só o que precisa.",
   },
 ];
 
 const STEPS = [
   {
     n: "1",
-    title: "Cadastre sua barbearia",
+    title: "Cadastre seu negócio",
     description: "Leva um minuto, sem cartão de crédito.",
   },
   {
@@ -109,10 +109,10 @@ export default function HomePage() {
         <Reveal className="relative mx-auto max-w-2xl text-center">
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-line-subtle bg-surface-1/80 px-3.5 py-1.5 text-xs font-medium text-ink-secondary">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-            Feito para barbearias que querem crescer sem bagunça
+            Feito para negócios de agendamento que querem crescer sem bagunça
           </div>
           <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-ink sm:text-5xl">
-            O sistema completo pra sua barbearia parar de{" "}
+            O sistema completo pra seu negócio parar de{" "}
             <span className="bg-brand-gradient bg-clip-text text-transparent">perder cliente</span> no
             WhatsApp.
           </h1>
@@ -218,7 +218,7 @@ export default function HomePage() {
             href="/criar-conta"
             className="relative mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-ink-inverse transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-8px_rgba(0,0,0,0.35)]"
           >
-            Criar minha barbearia
+            Criar meu negócio
             <ArrowRight size={18} strokeWidth={2} />
           </Link>
         </Reveal>

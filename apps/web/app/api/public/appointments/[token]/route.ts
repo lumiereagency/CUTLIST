@@ -22,7 +22,7 @@ export async function GET(_request: Request, { params }: { params: { token: stri
 
   let blockedReason: string | null = null;
   if (!active) blockedReason = "Este agendamento não está mais ativo.";
-  else if (!withinNotice) blockedReason = "Passou do prazo para alterar pelo link. Fale com a barbearia.";
+  else if (!withinNotice) blockedReason = "Passou do prazo para alterar pelo link. Fale com o estabelecimento.";
 
   return Response.json({
     appointment: summarize(appointment, shop),

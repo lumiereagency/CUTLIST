@@ -11,7 +11,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: { default: PRODUCT_NAME, template: `%s · ${PRODUCT_NAME}` },
-  description: "Agenda online para barbearias",
+  description: "Agenda online para o seu negócio",
 };
 
 // Aplica o tema salvo ANTES da primeira pintura — sem isto, a página nasceria

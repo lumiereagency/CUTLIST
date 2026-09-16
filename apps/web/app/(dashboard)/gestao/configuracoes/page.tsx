@@ -19,7 +19,7 @@ export default async function SettingsPage() {
       <header>
         <h1 className="text-xl font-semibold text-ink">Configurações</h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Dados da barbearia, endereço da página e regras de agendamento.
+          Dados do negócio, endereço da página e regras de agendamento.
         </p>
       </header>
 

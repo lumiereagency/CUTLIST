@@ -303,7 +303,7 @@ export function BookingWizard({
         {/* Convite de conta (Parte 1 §10): vem DEPOIS do valor entregue,
             nunca como requisito para agendar. */}
         <div className="rounded-xl border border-line-subtle p-5 text-center">
-          <p className="font-medium text-ink">Fique conectado com sua barbearia</p>
+          <p className="font-medium text-ink">Fique conectado com esse negócio</p>
           <p className="mt-1 text-sm text-ink-secondary">
             Crie sua conta gratuitamente para acompanhar seus horários, marcar de novo com
             poucos toques e receber promoções em primeira mão.
@@ -377,7 +377,7 @@ export function BookingWizard({
 
       {step === "profissional" ? (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-ink">Com quem você quer cortar?</h2>
+          <h2 className="mb-4 text-lg font-semibold text-ink">Com quem você quer ser atendido?</h2>
           <div className="space-y-3">
             <button
               type="button"
@@ -538,7 +538,7 @@ export function BookingWizard({
                 onChange={(event) => setWantsPromotions(event.target.checked)}
                 className="mt-1 h-5 w-5"
               />
-              <span>Quero receber promoções desta barbearia pelo WhatsApp.</span>
+              <span>Quero receber promoções deste negócio pelo WhatsApp.</span>
             </label>
 
             <button
@@ -557,7 +557,7 @@ export function BookingWizard({
           <h2 className="mb-2 text-lg font-semibold text-ink">Entrar na lista de espera</h2>
           <p className="mb-4 text-sm text-ink-secondary">
             Avisamos assim que abrir um horário compatível — o contato é sempre feito
-            diretamente pela barbearia.
+            diretamente pelo estabelecimento.
           </p>
 
           <form onSubmit={joinWaitlist} className="space-y-4">

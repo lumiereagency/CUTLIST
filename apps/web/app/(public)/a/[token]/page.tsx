@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const STATUS_LABEL: Record<string, string> = {
   CONFIRMED: "Confirmado",
   CANCELLED_BY_CUSTOMER: "Cancelado por você",
-  CANCELLED_BY_SHOP: "Cancelado pela barbearia",
+  CANCELLED_BY_SHOP: "Cancelado pelo estabelecimento",
   COMPLETED: "Atendimento concluído",
   NO_SHOW: "Você não compareceu",
   RESCHEDULED: "Remarcado",
@@ -42,7 +42,7 @@ export default async function ManageAppointmentPage({ params }: { params: { toke
   let blockedReason: string | null = null;
   if (!active) blockedReason = "Este agendamento não está mais ativo.";
   else if (!withinNotice) {
-    blockedReason = "Passou do prazo para alterar pelo link. Fale direto com a barbearia.";
+    blockedReason = "Passou do prazo para alterar pelo link. Fale direto com o estabelecimento.";
   }
 
   return (

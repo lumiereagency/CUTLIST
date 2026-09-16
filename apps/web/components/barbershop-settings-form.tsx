@@ -56,7 +56,7 @@ export function BarbershopSettingsForm({ shop }: { shop: ShopValues }) {
         </p>
       ) : null}
 
-      <Field label="Nome da barbearia">
+      <Field label="Nome do negócio">
         <input name="name" required defaultValue={shop.name} className={inputClass} />
       </Field>
 
@@ -78,7 +78,7 @@ export function BarbershopSettingsForm({ shop }: { shop: ShopValues }) {
       </Field>
 
       <Field
-        label="WhatsApp da barbearia"
+        label="WhatsApp do negócio"
         hint="Usado nos botões de contato. As mensagens são sempre enviadas por você, nunca automaticamente."
       >
         <input

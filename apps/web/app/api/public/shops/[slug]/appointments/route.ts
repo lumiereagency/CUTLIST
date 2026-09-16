@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request, { params }: { params: { slug: string } }) {
   const shop = await resolveShopBySlug(params.slug);
-  if (!shop) return fail("NOT_FOUND", "Barbearia não encontrada");
+  if (!shop) return fail("NOT_FOUND", "Negócio não encontrado");
 
   const parsed = await parseBody(request, createAppointmentRequest);
   if (!parsed.ok) return parsed.response;

@@ -44,7 +44,7 @@ export default function SignInPage() {
           <BrandMark className="h-10 w-10 text-brand-500" />
           <p className="mt-3 text-sm font-semibold tracking-wide text-ink-secondary">{PRODUCT_NAME}</p>
           <h1 className="mt-4 text-2xl font-semibold text-ink">Entrar</h1>
-          <p className="mt-1 text-sm text-ink-secondary">Acesse o painel da sua barbearia.</p>
+          <p className="mt-1 text-sm text-ink-secondary">Acesse o painel do seu negócio.</p>
         </div>
 
         <div className="rounded-2xl border border-line-subtle bg-surface-1 p-6">
@@ -77,7 +77,7 @@ export default function SignInPage() {
         <p className="mt-6 text-center text-sm text-ink-secondary">
           Ainda não tem conta?{" "}
           <Link href="/criar-conta" className="font-medium text-ink underline">
-            Cadastre sua barbearia
+            Cadastre seu negócio
           </Link>
         </p>
       </div>

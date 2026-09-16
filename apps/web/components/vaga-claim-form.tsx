@@ -123,7 +123,7 @@ export function VagaClaimForm({ token, services }: { token: string; services: Va
     return (
       <p className="rounded-lg bg-warning/12 p-4 text-sm text-warning">
         Essa vaga acabou de ser preenchida por outra pessoa. Você ainda pode ver os horários
-        normais de agendamento com a barbearia.
+        normais de agendamento com o estabelecimento.
       </p>
     );
   }

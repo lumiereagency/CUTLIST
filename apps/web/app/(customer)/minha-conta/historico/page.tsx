@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: "Atendido",
   NO_SHOW: "Não compareceu",
   CANCELLED_BY_CUSTOMER: "Cancelado por você",
-  CANCELLED_BY_SHOP: "Cancelado pela barbearia",
+  CANCELLED_BY_SHOP: "Cancelado pelo estabelecimento",
   RESCHEDULED: "Remarcado",
   CONFIRMED: "Confirmado",
 };
@@ -70,7 +70,7 @@ export default async function CustomerHistoryPage() {
             ) : null}
             {relation.preferredProfessional ? (
               <div>
-                <dt className="text-ink-secondary">Costuma cortar com</dt>
+                <dt className="text-ink-secondary">Costuma ser atendido por</dt>
                 <dd className="font-medium text-ink">
                   {relation.preferredProfessional.displayName}
                 </dd>

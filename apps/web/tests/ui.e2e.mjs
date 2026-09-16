@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
-const SLUG = process.env.DEMO_SLUG ?? "barbearia-do-ze";
+const SLUG = process.env.DEMO_SLUG ?? "studio-do-ze";
 // Sem CHROMIUM_PATH, usa o navegador que o Playwright instalou
 // (`pnpm --filter @barber/web exec playwright install chromium`).
 const launchOptions = process.env.CHROMIUM_PATH
@@ -59,12 +59,12 @@ describe("agendar pelo celular", () => {
   test("a página pública lista os serviços com preço", async () => {
     await page.goto(`${BASE_URL}/b/${SLUG}`, { waitUntil: "networkidle" });
     assert.ok(await visivel(page.getByRole("heading", { level: 1 })));
-    assert.ok(await visivel(page.getByText("Corte + Barba")));
+    assert.ok(await visivel(page.getByText("Atendimento Completo")));
     assert.ok(await visivel(page.getByText(/R\$\s?80,00/)));
   });
 
   test("escolher serviço leva direto para a escolha de profissional", async () => {
-    await page.getByText("Corte + Barba").first().click();
+    await page.getByText("Atendimento Completo").first().click();
     await page.waitForLoadState("networkidle");
     assert.ok(await visivel(page.getByRole("button", { name: /Qualquer profissional/ })));
   });
