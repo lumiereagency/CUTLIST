@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@barber/db";
 import { instantToLocalDate, instantToLocalTime } from "@barber/domain";
+import { billingGate } from "@barber/entitlements";
 import { findOpenOpportunityByToken } from "@/lib/smart-opportunity";
 import { VagaClaimForm } from "@/components/vaga-claim-form";
+import { BookingUnavailable } from "@/components/booking-unavailable";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,11 @@ export const dynamic = "force-dynamic";
 export default async function SmartOpportunityPage({ params }: { params: { token: string } }) {
   const opportunity = await findOpenOpportunityByToken(params.token);
   if (!opportunity) notFound();
+
+  const gate = await billingGate(opportunity.barbershopId);
+  if (gate?.blocked) {
+    return <BookingUnavailable shopName={opportunity.barbershop.name} shopPhone={opportunity.barbershop.phone} />;
+  }
 
   const disponivel = opportunity.status === "OPEN" && opportunity.expiresAt > new Date();
 

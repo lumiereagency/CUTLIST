@@ -8,6 +8,7 @@
 
 import { prisma } from "@barber/db";
 import { addMinutes, generateToken, hashToken } from "@barber/domain";
+import { billingGate } from "@barber/entitlements";
 import { NotFoundError, PolicyError, SlotUnavailableError, confirmAppointment, createHold } from "./booking.ts";
 
 function tokenSecret(): string {
@@ -101,6 +102,11 @@ export async function claimSmartOpportunity(
   ]);
   if (!service) throw new NotFoundError("Serviço não encontrado");
   if (!link || !link.active) throw new PolicyError("Este profissional não realiza esse serviço");
+
+  // Mesma regra da reserva normal (resolveShopBySlug): nenhum agendamento
+  // novo entra enquanto a barbearia estiver com o pagamento pendente.
+  const gate = await billingGate(opportunity.barbershopId);
+  if (gate?.blocked) throw new NotFoundError("Vaga não encontrada");
 
   // O horário de início nunca muda: a vaga é exatamente a que o cancelamento
   // liberou. slotIsFree (dentro de createHold) revalida o espaço de verdade

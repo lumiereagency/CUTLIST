@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@barber/db";
+import { billingGate } from "@barber/entitlements";
+import { BookingUnavailable } from "@/components/booking-unavailable";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,9 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
   });
 
   if (!shop || shop.status === "SUSPENDED") notFound();
+
+  const gate = await billingGate(shop.id);
+  if (gate?.blocked) return <BookingUnavailable shopName={shop.name} shopPhone={shop.phone} />;
 
   return (
     <main className="mx-auto min-h-screen max-w-lg bg-surface-1 px-5 py-8">

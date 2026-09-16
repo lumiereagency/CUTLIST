@@ -3,6 +3,7 @@
 
 import { prisma } from "@barber/db";
 import type { ZodSchema } from "zod";
+import { billingGate } from "@barber/entitlements";
 import {
   HoldExpiredError,
   NotFoundError,
@@ -55,10 +56,16 @@ export function failFrom(error: unknown): Response {
 }
 
 /// O tenant vem sempre do slug da rota pública, nunca de campo enviado pelo
-/// cliente (Parte 2 §3). Barbearia suspensa não recebe reserva (Parte 3 §11).
+/// cliente (Parte 2 §3). Barbearia suspensa não recebe reserva (Parte 3 §11),
+/// e nem barbearia com pagamento pendente — nenhum agendamento novo entra
+/// enquanto o acesso da equipe estiver bloqueado (ela não veria a reserva).
+/// Não distingue o motivo na resposta: quem chama isto de fora não precisa
+/// saber se é "não existe" ou "não está aceitando agora".
 export async function resolveShopBySlug(slug: string) {
   const shop = await prisma.barbershop.findUnique({ where: { slug } });
   if (!shop || shop.status === "SUSPENDED") return null;
+  const gate = await billingGate(shop.id);
+  if (gate?.blocked) return null;
   return shop;
 }
 

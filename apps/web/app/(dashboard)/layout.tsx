@@ -3,11 +3,14 @@ import { can, buildPixCopyPaste, paymentReportMessage } from "@barber/domain";
 import { activePlans, billingGate } from "@barber/entitlements";
 import { getSession } from "@/lib/auth";
 import { BillingPaywall } from "@/components/billing-paywall";
+import { RenewalReminderBanner } from "@/components/renewal-reminder-banner";
 import { DashboardNav, type DashboardNavItem } from "@/components/dashboard-nav";
 import { PRODUCT_NAME } from "@barber/config";
 
 const money = (minor: number) =>
   (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const DIAS_PARA_LEMBRETE = 3;
 
 export const dynamic = "force-dynamic";
 
@@ -17,33 +20,42 @@ export const dynamic = "force-dynamic";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/entrar");
+  const barbershopName = session.barbershopName;
 
   // Bloqueio de cobrança (§19 #3) vem antes de qualquer outra coisa: sem
   // acesso pago, nada do resto do painel deveria renderizar.
   const gate = await billingGate(session.barbershopId);
-  if (gate?.blocked) {
+
+  // Código Pix de um plano específico — usado tanto pelo bloqueio total
+  // quanto pelo lembrete não-bloqueante dos últimos dias, então monta uma
+  // vez só e cada chamador decide o que fazer com a lista.
+  async function pixPlanOptions() {
     const pixKey = process.env.PIX_KEY;
     const companyWhatsapp = process.env.COMPANY_WHATSAPP_NUMBER;
-    const plans = pixKey && companyWhatsapp ? await activePlans() : [];
-    if (pixKey && companyWhatsapp && plans.length > 0) {
-      const planOptions = plans.map((plan) => ({
-        code: plan.code,
-        name: plan.name,
-        amountLabel: money(plan.priceMinor),
-        pixCode: buildPixCopyPaste({
-          pixKey,
-          merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
-          merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
-          amountMinor: plan.priceMinor,
-          txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
-        }),
-        whatsappLink: paymentReportMessage({
-          companyWhatsappPhone: companyWhatsapp,
-          barbershopName: session.barbershopName,
-          planName: plan.name,
-        }),
-      }));
+    if (!pixKey || !companyWhatsapp || !gate) return [];
+    const plans = await activePlans();
+    return plans.map((plan) => ({
+      code: plan.code,
+      name: plan.name,
+      amountLabel: money(plan.priceMinor),
+      pixCode: buildPixCopyPaste({
+        pixKey,
+        merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
+        merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
+        amountMinor: plan.priceMinor,
+        txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
+      }),
+      whatsappLink: paymentReportMessage({
+        companyWhatsappPhone: companyWhatsapp,
+        barbershopName,
+        planName: plan.name,
+      }),
+    }));
+  }
 
+  if (gate?.blocked) {
+    const planOptions = await pixPlanOptions();
+    if (planOptions.length > 0) {
       return (
         <BillingPaywall
           shopName={session.barbershopName}
@@ -57,6 +69,28 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // trava o cliente por uma falha de configuração ou dado nossa — loga
     // alto e deixa passar.
     console.error("[billing-gate] cobrança bloqueada mas faltou config (PIX_KEY/COMPANY_WHATSAPP_NUMBER) ou plano ativo");
+  }
+
+  // Lembrete não-bloqueante: aparece nos últimos dias do período pago (trial
+  // ou ciclo mensal), pra ninguém ser pego de surpresa pelo bloqueio total.
+  let reminder: React.ReactNode = null;
+  if (gate && !gate.blocked && gate.currentPeriodEnd) {
+    const msRestantes = gate.currentPeriodEnd.getTime() - Date.now();
+    const diasRestantes = Math.ceil(msRestantes / (24 * 60 * 60 * 1000));
+    if (diasRestantes <= DIAS_PARA_LEMBRETE) {
+      const planOptions = await pixPlanOptions();
+      const planoAtual = planOptions.find((plan) => plan.code === gate.planCode);
+      if (planoAtual) {
+        reminder = (
+          <RenewalReminderBanner
+            daysLeft={diasRestantes}
+            dueDateLabel={gate.currentPeriodEnd.toLocaleDateString("pt-BR")}
+            plan={planoAtual}
+            alreadyReported={Boolean(gate.paymentReportedAt)}
+          />
+        );
+      }
+    }
   }
 
   const nav: Array<DashboardNavItem & { permission: Parameters<typeof can>[1] }> = [
@@ -99,6 +133,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userName={session.userName}
       />
       <div className="flex-1 lg:pl-64">
+        {reminder}
         <main className="mx-auto max-w-3xl px-5 py-6">{children}</main>
       </div>
     </div>

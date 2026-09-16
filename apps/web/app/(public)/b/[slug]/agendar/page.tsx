@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@barber/db";
+import { billingGate } from "@barber/entitlements";
 import { BookingWizard } from "@/components/booking-wizard";
+import { BookingUnavailable } from "@/components/booking-unavailable";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,9 @@ export default async function BookingPage({
   });
 
   if (!shop || shop.status === "SUSPENDED") notFound();
+
+  const gate = await billingGate(shop.id);
+  if (gate?.blocked) return <BookingUnavailable shopName={shop.name} shopPhone={shop.phone} />;
 
   const initialServiceId = shop.services.some((service) => service.id === searchParams.servico)
     ? searchParams.servico
