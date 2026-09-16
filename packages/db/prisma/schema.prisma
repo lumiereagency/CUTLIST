@@ -379,6 +379,9 @@ model Service {
   bufferAfterMinutes  Int @default(0) @map("buffer_after_minutes")
   active      Boolean @default(true)
   publicOrder Int     @default(0) @map("public_order")
+  /// Dias até o cliente tipicamente precisar deste serviço de novo (ex.:
+  /// manutenção de coloração). Nulo = serviço não entra na aba Retorno.
+  returnIntervalDays Int? @map("return_interval_days")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)

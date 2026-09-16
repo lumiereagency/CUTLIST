@@ -61,12 +61,22 @@ export function shopCancellationMessage(context: WhatsappContext): string {
   );
 }
 
-/// Convite para o cliente voltar (usado no Marco 6, mas o texto vive aqui).
-export function comeBackMessage(context: WhatsappContext & { daysSinceLastVisit: number }): string {
+/// Aba Retorno (Marco 6.9): convite para o cliente renovar/manter um serviço
+/// que tem prazo de manutenção configurado. Tom de recepção, não de cobrança
+/// — e o link já leva direto pra página pública de agendamento, com o mesmo
+/// serviço pré-selecionado.
+export function returnReminderMessage(context: {
+  customerPhone: string;
+  customerName: string;
+  serviceName: string;
+  shopName: string;
+  bookingUrl: string;
+}): string {
   return link(
     context.customerPhone,
-    `Olá, ${firstName(context.customerName)}! Faz um tempo desde seu último ${context.serviceName} ` +
-      `na ${context.shopName}. Quer marcar um horário?`
+    `Olá, ${firstName(context.customerName)}! Está chegando o dia da sua renovação de ` +
+      `${context.serviceName} na ${context.shopName}. Você gostaria de agendar novamente um ` +
+      `horário conosco? Clique no link abaixo: ${context.bookingUrl}`
   );
 }
 

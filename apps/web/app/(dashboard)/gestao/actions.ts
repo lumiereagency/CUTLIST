@@ -31,6 +31,14 @@ function parsePositiveInt(raw: string, field: string): number {
   return value;
 }
 
+// Campo opcional (retorno do serviço): vazio = null, "não entra na aba Retorno".
+function parseOptionalPositiveInt(raw: string): number | null {
+  if (!raw.trim()) return null;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) throw new Error("Retorno recomendado inválido");
+  return value;
+}
+
 // --- Serviços ---------------------------------------------------------------
 
 export async function saveService(_state: ActionState, formData: FormData): Promise<ActionState> {
@@ -45,6 +53,7 @@ export async function saveService(_state: ActionState, formData: FormData): Prom
       durationMinutes: parsePositiveInt(String(formData.get("duration") ?? ""), "Duração"),
       bufferBeforeMinutes: Number(formData.get("bufferBefore") ?? 0) || 0,
       bufferAfterMinutes: Number(formData.get("bufferAfter") ?? 0) || 0,
+      returnIntervalDays: parseOptionalPositiveInt(String(formData.get("returnIntervalDays") ?? "")),
       active: formData.get("active") === "on",
     };
 

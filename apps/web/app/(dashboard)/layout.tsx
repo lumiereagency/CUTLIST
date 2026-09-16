@@ -97,6 +97,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/hoje", label: "Hoje", iconKey: "hoje", permission: "appointments.read.own" as const },
     { href: "/agenda", label: "Agenda", iconKey: "agenda", permission: "appointments.read.own" as const },
     { href: "/clientes", label: "Clientes", iconKey: "clientes", permission: "customers.read" as const },
+    { href: "/retorno", label: "Retorno", iconKey: "retorno", permission: "customers.read" as const },
     {
       href: "/agenda-inteligente",
       label: "Agenda Inteligente",

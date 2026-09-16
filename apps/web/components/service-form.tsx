@@ -12,6 +12,7 @@ interface ServiceValues {
   durationMinutes: number;
   bufferBeforeMinutes: number;
   bufferAfterMinutes: number;
+  returnIntervalDays: number | null;
   active: boolean;
 }
 
@@ -101,6 +102,22 @@ export function ServiceForm({ service }: { service?: ServiceValues }) {
       </div>
       <p className="text-xs text-ink-secondary">
         O tempo de preparo e limpeza fica reservado na agenda, mas não aparece para o cliente.
+      </p>
+
+      <Field label="Retorno recomendado (dias)">
+        <input
+          name="returnIntervalDays"
+          type="number"
+          min={1}
+          step={1}
+          placeholder="Ex.: 30"
+          defaultValue={service?.returnIntervalDays ?? ""}
+          className={inputClass}
+        />
+      </Field>
+      <p className="text-xs text-ink-secondary">
+        Depois de quantos dias esse cliente costuma precisar do serviço de novo. Deixe em branco
+        para este serviço não entrar na aba Retorno.
       </p>
 
       <CheckboxField

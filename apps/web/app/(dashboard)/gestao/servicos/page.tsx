@@ -56,6 +56,7 @@ export default async function ServicesPage() {
                     {service.bufferBeforeMinutes || service.bufferAfterMinutes
                       ? ` · intervalo ${service.bufferBeforeMinutes}/${service.bufferAfterMinutes} min`
                       : null}
+                    {service.returnIntervalDays ? ` · retorno em ${service.returnIntervalDays} dias` : null}
                   </p>
                 </div>
                 <form action={deleteService}>
