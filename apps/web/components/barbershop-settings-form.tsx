@@ -23,6 +23,10 @@ interface ShopValues {
   minimumNoticeMinutes: number;
   cancellationNoticeMinutes: number;
   bookingWindowDays: number;
+  logoUrl?: string;
+  coverUrl?: string;
+  bio?: string;
+  instagramUrl?: string;
 }
 
 const initialState: ActionState = {};
@@ -86,6 +90,54 @@ export function BarbershopSettingsForm({ shop }: { shop: ShopValues }) {
           inputMode="tel"
           defaultValue={shop.phone ?? ""}
           placeholder="+55 11 98765-4321"
+          className={inputClass}
+        />
+      </Field>
+
+      <hr className="border-line-subtle" />
+
+      <p className="text-sm font-medium text-ink">Identidade da página pública</p>
+      <p className="-mt-3 text-xs text-ink-secondary">
+        Como sua página de agendamento aparece quando divulgada — no Instagram, no WhatsApp, em
+        qualquer link.
+      </p>
+
+      <Field label="Logo (link da imagem)" hint="Cole o link de uma imagem já hospedada em algum lugar (ex.: Google Drive, Instagram).">
+        <input
+          name="logoUrl"
+          type="url"
+          defaultValue={shop.logoUrl ?? ""}
+          placeholder="https://…"
+          className={inputClass}
+        />
+      </Field>
+
+      <Field label="Foto de capa (link da imagem)">
+        <input
+          name="coverUrl"
+          type="url"
+          defaultValue={shop.coverUrl ?? ""}
+          placeholder="https://…"
+          className={inputClass}
+        />
+      </Field>
+
+      <Field label="Frase curta sobre o negócio" hint="Aparece embaixo do nome na página pública.">
+        <input
+          name="bio"
+          maxLength={280}
+          defaultValue={shop.bio ?? ""}
+          placeholder="Cuidado e beleza para você, do jeito que merece."
+          className={inputClass}
+        />
+      </Field>
+
+      <Field label="Instagram (link do perfil)">
+        <input
+          name="instagramUrl"
+          type="url"
+          defaultValue={shop.instagramUrl ?? ""}
+          placeholder="https://instagram.com/seu-negocio"
           className={inputClass}
         />
       </Field>

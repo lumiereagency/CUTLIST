@@ -33,6 +33,39 @@ class LogOnlyProvider implements MessagingProvider {
   }
 }
 
+/// Produção: envia SMS de verdade pela API da Zenvia (v2/channels/sms).
+/// Escolhida por ser brasileira — cobrança em real, sem cartão internacional,
+/// boa entrega nas operadoras nacionais.
+class ZenviaProvider implements MessagingProvider {
+  readonly name = "zenvia";
+
+  async sendAccessCode(input: SendCodeInput): Promise<void> {
+    const apiToken = process.env.SMS_PROVIDER_API_KEY;
+    if (!apiToken) {
+      throw new Error("SMS_PROVIDER_API_KEY não configurado (necessário para SMS_PROVIDER=zenvia)");
+    }
+
+    const to = input.destination.replace(/\D/g, "");
+    const response = await fetch("https://api.zenvia.com/v2/channels/sms/messages", {
+      method: "POST",
+      headers: {
+        "X-API-TOKEN": apiToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: process.env.SMS_PROVIDER_FROM || "Cutlist",
+        to,
+        contents: [{ type: "text", text: `Seu código de acesso: ${input.code}` }],
+      }),
+    });
+
+    if (!response.ok) {
+      const corpo = await response.text().catch(() => "");
+      throw new Error(`Falha ao enviar SMS via Zenvia (HTTP ${response.status}): ${corpo}`);
+    }
+  }
+}
+
 let provider: MessagingProvider | null = null;
 
 export function messagingProvider(): MessagingProvider {
@@ -44,6 +77,10 @@ export function messagingProvider(): MessagingProvider {
   // Quando o provedor real for escolhido, é aqui que ele entra — a decisão fica
   // isolada em um ponto só.
   switch (escolhido) {
+    case "zenvia":
+      provider = new ZenviaProvider();
+      break;
+
     case "log":
       // Opt-in explícito. Vale para desenvolvimento, CI e homologação, que
       // rodam o build de produção e ainda assim precisam do fluxo completo.

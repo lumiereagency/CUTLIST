@@ -1,6 +1,8 @@
 import { prisma } from "@barber/db";
+import { parseBranding } from "@barber/domain";
 import { requirePermission } from "@/lib/auth";
 import { BarbershopSettingsForm } from "@/components/barbershop-settings-form";
+import { PublicLinkBox } from "@/components/public-link-box";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,8 @@ export default async function SettingsPage() {
 
   const canWrite = session.membership.role === "OWNER" || session.membership.role === "ADMIN";
   const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
+  const publicUrl = `${baseUrl}/b/${shop.slug}`;
+  const branding = parseBranding(shop.settings);
 
   return (
     <div className="space-y-6">
@@ -23,15 +27,7 @@ export default async function SettingsPage() {
         </p>
       </header>
 
-      <div className="rounded-xl bg-surface-1 p-4">
-        <p className="text-sm font-medium text-ink">Sua página de agendamento</p>
-        <p className="mt-1 break-all text-sm text-ink-secondary">
-          {baseUrl}/b/{shop.slug}
-        </p>
-        <p className="mt-2 text-xs text-ink-secondary">
-          É este link que você divulga para os clientes agendarem.
-        </p>
-      </div>
+      <PublicLinkBox url={publicUrl} />
 
       {canWrite ? (
         <BarbershopSettingsForm
@@ -46,6 +42,7 @@ export default async function SettingsPage() {
             minimumNoticeMinutes: shop.minimumNoticeMinutes,
             cancellationNoticeMinutes: shop.cancellationNoticeMinutes,
             bookingWindowDays: shop.bookingWindowDays,
+            ...branding,
           }}
         />
       ) : (

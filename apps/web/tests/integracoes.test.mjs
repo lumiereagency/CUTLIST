@@ -144,4 +144,65 @@ describe("provedor de envio do código de acesso", () => {
       assert.throws(() => messagingProvider(), /desconhecido/);
     });
   });
+
+  test("zenvia sem SMS_PROVIDER_API_KEY falha alto ao enviar", async () => {
+    await comAmbiente(
+      { NODE_ENV: "production", SMS_PROVIDER: "zenvia", SMS_PROVIDER_API_KEY: "" },
+      async () => {
+        await assert.rejects(
+          () => messagingProvider().sendAccessCode({ destination: "+5511999990000", code: "123456", channel: "SMS" }),
+          /SMS_PROVIDER_API_KEY/
+        );
+      }
+    );
+  });
+
+  test("zenvia chama a API com o telefone só em dígitos e o código na mensagem", async () => {
+    const chamadas = [];
+    const fetchOriginal = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      chamadas.push({ url, body: JSON.parse(options.body) });
+      return { ok: true, status: 200, text: async () => "" };
+    };
+
+    try {
+      await comAmbiente(
+        { NODE_ENV: "production", SMS_PROVIDER: "zenvia", SMS_PROVIDER_API_KEY: "token-teste" },
+        async () => {
+          await messagingProvider().sendAccessCode({
+            destination: "+55 11 99999-0000",
+            code: "123456",
+            channel: "SMS",
+          });
+        }
+      );
+    } finally {
+      globalThis.fetch = fetchOriginal;
+    }
+
+    assert.equal(chamadas.length, 1);
+    assert.equal(chamadas[0].url, "https://api.zenvia.com/v2/channels/sms/messages");
+    assert.equal(chamadas[0].body.to, "5511999990000");
+    assert.match(chamadas[0].body.contents[0].text, /123456/);
+  });
+
+  test("zenvia propaga erro da API sem fingir que enviou", async () => {
+    const fetchOriginal = globalThis.fetch;
+    globalThis.fetch = async () => ({ ok: false, status: 401, text: async () => "token inválido" });
+
+    try {
+      await comAmbiente(
+        { NODE_ENV: "production", SMS_PROVIDER: "zenvia", SMS_PROVIDER_API_KEY: "token-teste" },
+        async () => {
+          await assert.rejects(
+            () =>
+              messagingProvider().sendAccessCode({ destination: "+5511999990000", code: "123456", channel: "SMS" }),
+            /401/
+          );
+        }
+      );
+    } finally {
+      globalThis.fetch = fetchOriginal;
+    }
+  });
 });

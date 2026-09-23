@@ -13,3 +13,4 @@ export * from "./entitlements.js";
 export * from "./return-score.js";
 export * from "./waitlist-match.js";
 export * from "./pix.js";
+export * from "./branding.js";

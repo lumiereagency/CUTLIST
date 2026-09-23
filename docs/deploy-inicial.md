@@ -73,8 +73,14 @@ AUTH_SECRET=<gerado no passo 2>
 TOKEN_HMAC_SECRET=<gerado no passo 2>
 ENCRYPTION_KEY=<gerado no passo 2>
 
-# Teste interno: aceito explicitamente. Nunca para cliente real — ver
-# apps/web/lib/messaging.ts. Sem isto, o boot falha em NODE_ENV=production.
+# Para cliente real, use o provedor de verdade (Zenvia): crie uma conta em
+# https://www.zenvia.com, pegue o token da API e defina:
+#   SMS_PROVIDER=zenvia
+#   SMS_PROVIDER_API_KEY=<token da conta Zenvia>
+#   SMS_PROVIDER_FROM=<remetente da conta, opcional>
+# "log" só serve para teste interno — escreve o código no log do servidor em
+# vez de mandar por SMS de verdade. Sem SMS_PROVIDER definido, o boot falha em
+# NODE_ENV=production (ver apps/web/lib/messaging.ts).
 SMS_PROVIDER=log
 
 # Cobrança manual via Pix — enquanto não há gateway integrado (§19 #3), é
@@ -241,9 +247,9 @@ lançamento"):
 - **Textos legais definitivos** — o consentimento do cliente grava a versão do
   texto aceito (`TERMS_VERSION`, hoje `dev-0`). É o mais urgente dos
   pendentes.
-- **Provedor de SMS real** — `SMS_PROVIDER=log` escreve o código de acesso no
-  log do servidor em vez de mandar por SMS. Ótimo para teste interno,
-  inaceitável para cliente real.
+- **Provedor de SMS real** — já existe (`SMS_PROVIDER=zenvia`, ver passo 3
+  acima). Só continua bloqueando se a variável ainda estiver em
+  `SMS_PROVIDER=log` na `.env.prod` da VPS.
 - **Backup testado** — `docs/runbook-operacao.md` cobre isso; o ensaio de
   restauração é obrigatório antes de declarar "produção pronta" (Parte 3
   §16), não antes de testar internamente.

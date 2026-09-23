@@ -9,7 +9,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@barber/db";
-import { isValidSlug, slugify } from "@barber/domain";
+import { isValidSlug, mergeBranding, slugify, type BarbershopBranding } from "@barber/domain";
 import { assertBelongsToTenant, requirePermission } from "@/lib/auth";
 
 export interface ActionState {
@@ -213,6 +213,20 @@ export async function deleteScheduleException(formData: FormData): Promise<void>
 
 // --- Dados da barbearia -----------------------------------------------------
 
+// Link opcional de marca (logo/capa/Instagram) exibido na página pública —
+// nunca obrigatório, mas quando preenchido precisa apontar pra algo de verdade.
+function parseOptionalUrl(raw: string, campo: string): string | undefined {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error();
+  } catch {
+    throw new Error(`${campo} precisa ser um link válido (começando com https://)`);
+  }
+  return trimmed;
+}
+
 export async function saveBarbershop(
   _state: ActionState,
   formData: FormData
@@ -234,7 +248,24 @@ export async function saveBarbershop(
     return { error: "Fuso horário inválido." };
   }
 
+  let branding: BarbershopBranding;
   try {
+    branding = {
+      logoUrl: parseOptionalUrl(String(formData.get("logoUrl") ?? ""), "O link da logo"),
+      coverUrl: parseOptionalUrl(String(formData.get("coverUrl") ?? ""), "O link da capa"),
+      instagramUrl: parseOptionalUrl(String(formData.get("instagramUrl") ?? ""), "O link do Instagram"),
+      bio: String(formData.get("bio") ?? "").trim().slice(0, 280) || undefined,
+    };
+  } catch (error) {
+    return { error: (error as Error).message };
+  }
+
+  try {
+    const current = await prisma.barbershop.findUniqueOrThrow({
+      where: { id: session.barbershopId },
+      select: { settings: true },
+    });
+
     await prisma.barbershop.update({
       where: { id: session.barbershopId },
       data: {
@@ -248,6 +279,7 @@ export async function saveBarbershop(
         minimumNoticeMinutes: Number(formData.get("minimumNoticeMinutes") ?? 0) || 0,
         cancellationNoticeMinutes: Number(formData.get("cancellationNoticeMinutes") ?? 0) || 0,
         bookingWindowDays: Number(formData.get("bookingWindowDays") ?? 60) || 60,
+        settings: mergeBranding(current.settings, branding) as never,
       },
     });
   } catch (error) {
