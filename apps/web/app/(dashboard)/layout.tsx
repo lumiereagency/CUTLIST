@@ -6,6 +6,7 @@ import { paymentConfigForCountry } from "@/lib/payment-config";
 import { BillingPaywall } from "@/components/billing-paywall";
 import { RenewalReminderBanner } from "@/components/renewal-reminder-banner";
 import { DashboardNav, type DashboardNavItem } from "@/components/dashboard-nav";
+import { IosInstallGuide } from "@/components/ios-install-guide";
 import { PRODUCT_NAME } from "@barber/config";
 
 const DIAS_PARA_LEMBRETE = 3;
@@ -145,6 +146,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {reminder}
         <main className="mx-auto max-w-3xl px-5 py-6">{children}</main>
       </div>
+      <IosInstallGuide locale="pt" />
     </div>
   );
 }
