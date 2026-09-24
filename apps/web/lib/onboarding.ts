@@ -22,10 +22,22 @@ export class EmailAlreadyUsedError extends Error {
   }
 }
 
+/// "taken" = a corrida com outro cadastro/tentativa perdeu (o endereço bom
+/// existia mas alguém pegou primeiro); "invalid" = o nome não rendeu um
+/// endereço válido de jeito nenhum. Quem exibe o erro (Marco 7: cadastro em
+/// espanhol) traduz por este código em vez de parsear a mensagem em português.
+export type InvalidSlugReason = "invalid" | "taken";
+
 export class InvalidSlugError extends Error {
-  constructor(message = "Endereço da página inválido") {
+  // Sem parameter property de propósito: os testes rodam este arquivo direto
+  // via `node --experimental-strip-types` (só apaga tipos, não transforma
+  // sintaxe), que não suporta esse açúcar do TypeScript.
+  readonly reason: InvalidSlugReason;
+
+  constructor(message = "Endereço da página inválido", reason: InvalidSlugReason = "invalid") {
     super(message);
     this.name = "InvalidSlugError";
+    this.reason = reason;
   }
 }
 
@@ -65,7 +77,7 @@ async function findFreeSlug(base: string): Promise<string> {
     });
     if (!taken) return candidate;
   }
-  throw new InvalidSlugError("Não foi possível gerar um endereço para esta página");
+  throw new InvalidSlugError("Não foi possível gerar um endereço para esta página", "taken");
 }
 
 export async function signUpOwner(input: SignUpInput): Promise<SignUpResult> {
@@ -154,7 +166,7 @@ export async function signUpOwner(input: SignUpInput): Promise<SignUpResult> {
     if ((error as { code?: string }).code === "P2002") {
       const target = (error as { meta?: { target?: string[] } }).meta?.target ?? [];
       if (target.includes("email")) throw new EmailAlreadyUsedError();
-      throw new InvalidSlugError("Este endereço de página acabou de ser usado. Tente outro.");
+      throw new InvalidSlugError("Este endereço de página acabou de ser usado. Tente outro.", "taken");
     }
     throw error;
   }

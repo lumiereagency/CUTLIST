@@ -8,16 +8,23 @@ import { BrandMark } from "@/components/brand-mark";
 import { Field, inputClass } from "@/components/field";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PRODUCT_NAME } from "@barber/config";
+import { landingLocaleFromParam, type LandingLocale } from "@/lib/landing-i18n";
 
 const initialState: FormState = {};
 
 // Só o Brasil tem múltiplos fusos de verdade — os demais países entram com
 // um só, então não faz sentido perguntar região deles também (o funil fica
 // "país" primeiro, e só o Brasil abre uma segunda pergunta).
-const COUNTRIES = [
-  { value: "BR", label: "Brasil", timezone: null },
-  { value: "PY", label: "Paraguai", timezone: "America/Asuncion" },
-];
+const COUNTRIES: Record<LandingLocale, { value: string; label: string; timezone: string | null }[]> = {
+  pt: [
+    { value: "BR", label: "Brasil", timezone: null },
+    { value: "PY", label: "Paraguai", timezone: "America/Asuncion" },
+  ],
+  es: [
+    { value: "BR", label: "Brasil", timezone: null },
+    { value: "PY", label: "Paraguay", timezone: "America/Asuncion" },
+  ],
+};
 
 // Fusos do Brasil. O campo é obrigatório porque sem ele a agenda não existe,
 // mas ninguém deveria precisar pensar nisso: o padrão cobre a maioria.
@@ -29,7 +36,60 @@ const BR_TIMEZONES = [
   { value: "America/Noronha", label: "Fernando de Noronha" },
 ];
 
-function SubmitButton() {
+const STRINGS: Record<
+  LandingLocale,
+  {
+    heading: string;
+    subheading: string;
+    businessName: string;
+    businessNameHint: string;
+    country: string;
+    timezone: string;
+    ownerName: string;
+    email: string;
+    password: string;
+    passwordHint: string;
+    submit: string;
+    submitting: string;
+    hasAccount: string;
+    signIn: string;
+  }
+> = {
+  pt: {
+    heading: "Cadastre seu negócio",
+    subheading: "Leva um minuto. Depois você configura serviços e horários.",
+    businessName: "Nome do negócio",
+    businessNameHint: "É o nome que aparece na sua página de agendamento.",
+    country: "País",
+    timezone: "Onde fica seu negócio",
+    ownerName: "Seu nome",
+    email: "Seu e-mail",
+    password: "Senha",
+    passwordHint: "Pelo menos 10 caracteres.",
+    submit: "Criar meu negócio",
+    submitting: "Criando…",
+    hasAccount: "Já tem conta?",
+    signIn: "Entrar",
+  },
+  es: {
+    heading: "Registrá tu negocio",
+    subheading: "Lleva un minuto. Después configurás servicios y horarios.",
+    businessName: "Nombre del negocio",
+    businessNameHint: "Es el nombre que aparece en tu página de reservas.",
+    country: "País",
+    timezone: "Dónde queda tu negocio",
+    ownerName: "Tu nombre",
+    email: "Tu correo",
+    password: "Contraseña",
+    passwordHint: "Al menos 10 caracteres.",
+    submit: "Crear mi negocio",
+    submitting: "Creando…",
+    hasAccount: "¿Ya tenés cuenta?",
+    signIn: "Iniciar sesión",
+  },
+};
+
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -37,15 +97,18 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-xl bg-brand-500 px-4 py-3 font-semibold text-ink-inverse transition-colors hover:bg-brand-400 active:bg-brand-600 disabled:opacity-50"
     >
-      {pending ? "Criando…" : "Criar meu negócio"}
+      {pending ? pendingLabel : label}
     </button>
   );
 }
 
-export default function SignUpPage() {
+export default function SignUpPage({ searchParams }: { searchParams: { lang?: string } }) {
+  const locale = landingLocaleFromParam(searchParams.lang);
+  const t = STRINGS[locale];
+  const countries = COUNTRIES[locale];
   const [state, formAction] = useFormState(signUp, initialState);
-  const [country, setCountry] = useState("BR");
-  const selectedCountry = COUNTRIES.find((item) => item.value === country) ?? COUNTRIES[0]!;
+  const [country, setCountry] = useState(locale === "es" ? "PY" : "BR");
+  const selectedCountry = countries.find((item) => item.value === country) ?? countries[0]!;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas px-5 py-10">
@@ -63,10 +126,8 @@ export default function SignUpPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           <BrandMark className="h-10 w-10 text-brand-500" />
           <p className="mt-3 text-sm font-semibold tracking-wide text-ink-secondary">{PRODUCT_NAME}</p>
-          <h1 className="mt-4 text-2xl font-semibold text-ink">Cadastre seu negócio</h1>
-          <p className="mt-1 text-sm text-ink-secondary">
-            Leva um minuto. Depois você configura serviços e horários.
-          </p>
+          <h1 className="mt-4 text-2xl font-semibold text-ink">{t.heading}</h1>
+          <p className="mt-1 text-sm text-ink-secondary">{t.subheading}</p>
         </div>
 
         <div className="rounded-2xl border border-line-subtle bg-surface-1 p-6">
@@ -77,18 +138,20 @@ export default function SignUpPage() {
               </p>
             ) : null}
 
-            <Field label="Nome do negócio" hint="É o nome que aparece na sua página de agendamento.">
+            <input type="hidden" name="lang" value={locale} />
+
+            <Field label={t.businessName} hint={t.businessNameHint}>
               <input id="barbershopName" name="barbershopName" required className={inputClass} />
             </Field>
 
-            <Field label="País">
+            <Field label={t.country}>
               <select
                 name="country"
                 value={country}
                 onChange={(event) => setCountry(event.target.value)}
                 className={inputClass}
               >
-                {COUNTRIES.map((item) => (
+                {countries.map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
                   </option>
@@ -99,7 +162,7 @@ export default function SignUpPage() {
             {selectedCountry.timezone ? (
               <input type="hidden" name="timezone" value={selectedCountry.timezone} />
             ) : (
-              <Field label="Onde fica seu negócio">
+              <Field label={t.timezone}>
                 <select id="timezone" name="timezone" defaultValue="America/Sao_Paulo" className={inputClass}>
                   {BR_TIMEZONES.map((zone) => (
                     <option key={zone.value} value={zone.value}>
@@ -112,15 +175,15 @@ export default function SignUpPage() {
 
             <hr className="border-line-subtle" />
 
-            <Field label="Seu nome">
+            <Field label={t.ownerName}>
               <input id="ownerName" name="ownerName" required autoComplete="name" className={inputClass} />
             </Field>
 
-            <Field label="Seu e-mail">
+            <Field label={t.email}>
               <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
             </Field>
 
-            <Field label="Senha" hint="Pelo menos 10 caracteres.">
+            <Field label={t.password} hint={t.passwordHint}>
               <input
                 id="password"
                 name="password"
@@ -132,14 +195,14 @@ export default function SignUpPage() {
               />
             </Field>
 
-            <SubmitButton />
+            <SubmitButton label={t.submit} pendingLabel={t.submitting} />
           </form>
         </div>
 
         <p className="mt-6 text-center text-sm text-ink-secondary">
-          Já tem conta?{" "}
+          {t.hasAccount}{" "}
           <Link href="/entrar" className="font-medium text-ink underline">
-            Entrar
+            {t.signIn}
           </Link>
         </p>
       </div>

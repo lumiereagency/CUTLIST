@@ -40,8 +40,15 @@ const PARALLELIZATION = 1;
 const KEY_LENGTH = 64;
 const MAX_MEMORY = 128 * COST * BLOCK_SIZE * 2;
 
+/// Motivo estruturado, para quem exibe o erro poder traduzir sem parsear a
+/// mensagem em português (ex.: o cadastro em espanhol do Marco 7).
+export type WeakPasswordReason = "too_short" | "too_long" | "only_digits";
+
 export class WeakPasswordError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    public readonly reason: WeakPasswordReason
+  ) {
     super(message);
     this.name = "WeakPasswordError";
   }
@@ -51,13 +58,13 @@ export class WeakPasswordError extends Error {
 /// exigir símbolo costuma só produzir "Senha1!" — mais frágil e mais esquecível.
 export function assertStrongPassword(password: string): void {
   if (password.length < 10) {
-    throw new WeakPasswordError("A senha precisa ter pelo menos 10 caracteres");
+    throw new WeakPasswordError("A senha precisa ter pelo menos 10 caracteres", "too_short");
   }
   if (password.length > 200) {
-    throw new WeakPasswordError("A senha é longa demais");
+    throw new WeakPasswordError("A senha é longa demais", "too_long");
   }
   if (/^\d+$/.test(password)) {
-    throw new WeakPasswordError("A senha não pode ser só números");
+    throw new WeakPasswordError("A senha não pode ser só números", "only_digits");
   }
 }
 
