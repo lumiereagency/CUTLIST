@@ -19,10 +19,12 @@ const COUNTRIES: Record<LandingLocale, { value: string; label: string; timezone:
   pt: [
     { value: "BR", label: "Brasil", timezone: null },
     { value: "PY", label: "Paraguai", timezone: "America/Asuncion" },
+    { value: "UY", label: "Uruguai", timezone: "America/Montevideo" },
   ],
   es: [
     { value: "BR", label: "Brasil", timezone: null },
     { value: "PY", label: "Paraguay", timezone: "America/Asuncion" },
+    { value: "UY", label: "Uruguay", timezone: "America/Montevideo" },
   ],
 };
 
