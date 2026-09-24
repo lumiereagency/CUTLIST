@@ -15,7 +15,7 @@ import {
   addMinutes,
   generateToken,
   hashToken,
-  normalizePhoneBR,
+  normalizePhone,
 } from "@barber/domain";
 
 export class SlotUnavailableError extends Error {
@@ -164,7 +164,14 @@ export interface ConfirmAppointmentResult {
 export async function confirmAppointment(
   input: ConfirmAppointmentInput
 ): Promise<ConfirmAppointmentResult> {
-  const normalizedPhone = normalizePhoneBR(input.customerPhone);
+  // Precisa do país antes de normalizar o telefone (Marco 7) — por isso essa
+  // consulta vem antes da transação, mesmo que o restante da barbearia seja
+  // buscado de novo lá dentro pra montar a resposta.
+  const { country } = await prisma.barbershop.findUniqueOrThrow({
+    where: { id: input.barbershopId },
+    select: { country: true },
+  });
+  const normalizedPhone = normalizePhone(input.customerPhone, country);
   const holdHash = hashToken(input.holdToken, tokenSecret());
   const managementToken = generateToken();
 
@@ -664,7 +671,11 @@ export async function createManualAppointment(
     throw new PolicyError("Você só pode criar reserva na sua própria agenda");
   }
 
-  const normalizedPhone = normalizePhoneBR(input.customerPhone);
+  const { country } = await prisma.barbershop.findUniqueOrThrow({
+    where: { id: input.barbershopId },
+    select: { country: true },
+  });
+  const normalizedPhone = normalizePhone(input.customerPhone, country);
   const managementToken = generateToken();
 
   return prisma.$transaction(async (tx) => {

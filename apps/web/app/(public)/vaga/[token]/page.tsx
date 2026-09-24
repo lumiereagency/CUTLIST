@@ -5,6 +5,7 @@ import { billingGate } from "@barber/entitlements";
 import { findOpenOpportunityByToken } from "@/lib/smart-opportunity";
 import { VagaClaimForm } from "@/components/vaga-claim-form";
 import { BookingUnavailable } from "@/components/booking-unavailable";
+import { formatDayLabel } from "@/lib/booking-i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,13 @@ export default async function SmartOpportunityPage({ params }: { params: { token
 
   const gate = await billingGate(opportunity.barbershopId);
   if (gate?.blocked) {
-    return <BookingUnavailable shopName={opportunity.barbershop.name} shopPhone={opportunity.barbershop.phone} />;
+    return (
+      <BookingUnavailable
+        shopName={opportunity.barbershop.name}
+        shopPhone={opportunity.barbershop.phone}
+        country={opportunity.barbershop.country}
+      />
+    );
   }
 
   const disponivel = opportunity.status === "OPEN" && opportunity.expiresAt > new Date();
@@ -35,11 +42,7 @@ export default async function SmartOpportunityPage({ params }: { params: { token
   const shop = opportunity.barbershop;
   const localDate = instantToLocalDate(opportunity.startsAt, shop.timezone);
   const localTime = instantToLocalTime(opportunity.startsAt, shop.timezone);
-  const dayLabel = new Date(`${localDate}T12:00:00Z`).toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  const dayLabel = formatDayLabel(localDate, shop.country);
 
   return (
     <main className="relative mx-auto min-h-screen max-w-lg overflow-hidden bg-surface-1 px-5 py-8">
@@ -78,6 +81,7 @@ export default async function SmartOpportunityPage({ params }: { params: { token
           <VagaClaimForm
             token={params.token}
             shopName={shop.name}
+            country={shop.country}
             services={services.map((service) => ({
               id: service.id,
               name: service.name,

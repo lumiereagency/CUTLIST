@@ -13,6 +13,7 @@ import { requirePermission } from "@/lib/auth";
 import { AppointmentActions } from "@/components/appointment-actions";
 import { ManualBookingForm } from "@/components/manual-booking-form";
 import { BlockPeriodForm } from "@/components/block-period-form";
+import { formatDayLabel as formatCustomerDayLabel } from "@/lib/booking-i18n";
 import { removeBlock } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -303,9 +304,16 @@ export default async function AgendaPage({
                     customerName: appointment.customerNameSnapshot,
                     serviceName: appointment.serviceNameSnapshot,
                     professionalName: appointment.professionalNameSnapshot,
-                    dayLabel: dayLabel(instantToLocalDate(appointment.startsAt, shop.timezone)),
+                    // Data no idioma do cliente (Marco 7) — diferente do `dayLabel`
+                    // usado nos títulos desta tela, que é sempre pt-BR porque é a
+                    // equipe quem lê o painel.
+                    dayLabel: formatCustomerDayLabel(
+                      instantToLocalDate(appointment.startsAt, shop.timezone),
+                      shop.country
+                    ),
                     timeLabel: instantToLocalTime(appointment.startsAt, shop.timezone),
                     shopName: shop.name,
+                    country: shop.country,
                   };
 
                   return (

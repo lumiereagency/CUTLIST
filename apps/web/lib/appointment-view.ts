@@ -6,6 +6,7 @@
 
 import type { Appointment, Barbershop } from "@barber/db";
 import { instantToLocalDate, instantToLocalTime } from "@barber/domain";
+import { formatDayLabel } from "./booking-i18n.ts";
 
 function baseUrl(): string {
   return process.env.APP_BASE_URL ?? "http://localhost:3000";
@@ -31,11 +32,14 @@ export function summarize(appointment: Appointment, shop: Barbershop) {
 function whatsappShareUrl(appointment: Appointment, shop: Barbershop): string | null {
   if (!shop.phone) return null;
 
-  const date = instantToLocalDate(appointment.startsAt, shop.timezone);
+  const date = formatDayLabel(instantToLocalDate(appointment.startsAt, shop.timezone), shop.country);
   const time = instantToLocalTime(appointment.startsAt, shop.timezone);
   const text =
-    `Olá! Acabei de agendar ${appointment.serviceNameSnapshot} com ` +
-    `${appointment.professionalNameSnapshot} para ${date} às ${time} pelo sistema da ${shop.name}.`;
+    shop.country === "BR"
+      ? `Olá! Acabei de agendar ${appointment.serviceNameSnapshot} com ` +
+        `${appointment.professionalNameSnapshot} para ${date} às ${time} pelo sistema da ${shop.name}.`
+      : `¡Hola! Acabo de agendar ${appointment.serviceNameSnapshot} con ` +
+        `${appointment.professionalNameSnapshot} para el ${date} a las ${time} por el sistema de ${shop.name}.`;
 
   return `https://wa.me/${shop.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`;
 }
@@ -46,7 +50,7 @@ function calendarUrl(appointment: Appointment, shop: Barbershop): string {
     action: "TEMPLATE",
     text: `${appointment.serviceNameSnapshot} — ${shop.name}`,
     dates: `${stamp(appointment.startsAt)}/${stamp(appointment.endsAt)}`,
-    details: `Com ${appointment.professionalNameSnapshot}`,
+    details: shop.country === "BR" ? `Com ${appointment.professionalNameSnapshot}` : `Con ${appointment.professionalNameSnapshot}`,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

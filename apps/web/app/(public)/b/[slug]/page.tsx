@@ -5,12 +5,9 @@ import { prisma } from "@barber/db";
 import { parseBranding } from "@barber/domain";
 import { billingGate } from "@barber/entitlements";
 import { BookingUnavailable } from "@/components/booking-unavailable";
+import { bookingStrings, formatPrice } from "@/lib/booking-i18n";
 
 export const dynamic = "force-dynamic";
-
-function formatPrice(minor: number): string {
-  return (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 export default async function BarbershopPublicPage({ params }: { params: { slug: string } }) {
   const shop = await prisma.barbershop.findUnique({
@@ -24,8 +21,11 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
   if (!shop || shop.status === "SUSPENDED") notFound();
 
   const gate = await billingGate(shop.id);
-  if (gate?.blocked) return <BookingUnavailable shopName={shop.name} shopPhone={shop.phone} />;
+  if (gate?.blocked) {
+    return <BookingUnavailable shopName={shop.name} shopPhone={shop.phone} country={shop.country} />;
+  }
 
+  const t = bookingStrings(shop.country);
   const branding = parseBranding(shop.settings);
   const whatsappUrl = shop.phone ? `https://wa.me/${shop.phone.replace(/\D/g, "")}` : null;
 
@@ -67,7 +67,7 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
                 className="inline-flex items-center gap-1.5 rounded-full border border-line-subtle px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
               >
                 <MessageCircle size={14} strokeWidth={1.9} />
-                WhatsApp
+                {t.whatsappButton}
               </a>
             ) : null}
             {branding.instagramUrl ? (
@@ -78,7 +78,7 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
                 className="inline-flex items-center gap-1.5 rounded-full border border-line-subtle px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
               >
                 <Link2 size={14} strokeWidth={1.9} />
-                Instagram
+                {t.instagramButton}
               </a>
             ) : null}
           </div>
@@ -88,13 +88,11 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
       <div className="px-5">
         <section>
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-secondary">
-            Serviços
+            {t.servicesHeading}
           </h2>
 
           {shop.services.length === 0 ? (
-            <p className="rounded-lg bg-canvas p-4 text-sm text-ink-secondary">
-              Ainda não há serviços publicados por aqui.
-            </p>
+            <p className="rounded-lg bg-canvas p-4 text-sm text-ink-secondary">{t.noServicesYet}</p>
           ) : (
             <ul className="space-y-3">
               {shop.services.map((service) => (
@@ -110,7 +108,7 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
                       </span>
                     </span>
                     <span className="whitespace-nowrap font-medium text-ink">
-                      {formatPrice(service.priceMinor)}
+                      {formatPrice(service.priceMinor, shop.country)}
                     </span>
                   </Link>
                 </li>
@@ -122,7 +120,7 @@ export default async function BarbershopPublicPage({ params }: { params: { slug:
         {shop.professionals.length > 0 ? (
           <section className="mt-8">
             <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-ink-secondary">
-              Profissionais
+              {t.professionalsHeading}
             </h2>
             <ul className="flex flex-wrap gap-2">
               {shop.professionals.map((professional) => (

@@ -10,6 +10,7 @@
 // - perder o horário para outra pessoa mostra alternativas, não um beco.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { bookingStrings, formatDayLabel, formatPrice, formatTime } from "@/lib/booking-i18n";
 
 interface Service {
   id: string;
@@ -46,21 +47,6 @@ interface Confirmation {
 
 type Step = "servico" | "profissional" | "horario" | "dados" | "sucesso" | "espera" | "espera_ok";
 
-const formatPrice = (minor: number) =>
-  (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const formatDayLabel = (isoDate: string) => {
-  const date = new Date(`${isoDate}T12:00:00Z`);
-  return date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-};
-
-const formatTime = (iso: string, timeZone: string) =>
-  new Date(iso).toLocaleTimeString("pt-BR", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
 function nextDates(count: number): { from: string; to: string } {
   const today = new Date();
   const to = new Date(today.getTime() + count * 864e5);
@@ -74,6 +60,7 @@ export function BookingWizard({
   professionals,
   initialServiceId,
   termsVersion,
+  country,
 }: {
   slug: string;
   shopName: string;
@@ -81,7 +68,9 @@ export function BookingWizard({
   professionals: Professional[];
   initialServiceId?: string;
   termsVersion: string;
+  country: string;
 }) {
+  const t = bookingStrings(country);
   const [step, setStep] = useState<Step>(initialServiceId ? "profissional" : "servico");
   const [serviceId, setServiceId] = useState(initialServiceId ?? "");
   const [professionalId, setProfessionalId] = useState<string | null>(null);
@@ -117,7 +106,7 @@ export function BookingWizard({
     try {
       const response = await fetch(`/api/public/shops/${slug}/availability?${query}`);
       const body = await response.json();
-      if (!response.ok) throw new Error(body?.error?.message ?? "Não foi possível carregar a agenda");
+      if (!response.ok) throw new Error(body?.error?.message ?? t.couldNotLoadAgenda);
       setTimezone(body.timezone);
       setDays(body.days.filter((day: { slots: Slot[] }) => day.slots.length > 0));
     } catch (error) {
@@ -125,7 +114,7 @@ export function BookingWizard({
     } finally {
       setLoadingSlots(false);
     }
-  }, [serviceId, professionalId, slug]);
+  }, [serviceId, professionalId, slug, t]);
 
   useEffect(() => {
     if (step === "horario") void loadSlots();
@@ -142,7 +131,7 @@ export function BookingWizard({
       if (remaining === 0) {
         setHold(null);
         setStep("horario");
-        setMessage("Sua reserva temporária expirou. Escolha o horário de novo.");
+        setMessage(t.holdExpiredMessage);
         void loadSlots();
       }
     };
@@ -150,7 +139,7 @@ export function BookingWizard({
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [hold, loadSlots]);
+  }, [hold, loadSlots, t]);
 
   async function selectSlot(slot: Slot) {
     setSubmitting(true);
@@ -170,7 +159,7 @@ export function BookingWizard({
       const body = await response.json();
 
       if (!response.ok) {
-        setMessage(body?.error?.message ?? "Este horário não está mais disponível.");
+        setMessage(body?.error?.message ?? t.slotGoneMessage);
         await loadSlots();
         return;
       }
@@ -203,7 +192,7 @@ export function BookingWizard({
 
       if (!response.ok) {
         const body = await response.json();
-        setMessage(body?.error?.message ?? "Não foi possível entrar na lista de espera.");
+        setMessage(body?.error?.message ?? t.couldNotJoinWaitlist);
         return;
       }
 
@@ -241,7 +230,7 @@ export function BookingWizard({
       const body = await response.json();
 
       if (!response.ok) {
-        setMessage(body?.error?.message ?? "Não foi possível concluir.");
+        setMessage(body?.error?.message ?? t.couldNotComplete);
         if (body?.error?.details?.nearestSlots?.length) {
           setAlternatives(body.error.details.nearestSlots);
         }
@@ -264,12 +253,12 @@ export function BookingWizard({
     return (
       <div className="animate-celebrate space-y-6">
         <div className="rounded-xl bg-success/12 p-5">
-          <h2 className="text-lg font-semibold text-success">Horário reservado!</h2>
+          <h2 className="text-lg font-semibold text-success">{t.successTitle}</h2>
           <p className="mt-2 text-success">
-            {confirmation.appointment.serviceName} com {confirmation.appointment.professionalName}
+            {confirmation.appointment.serviceName} · {confirmation.appointment.professionalName}
           </p>
           <p className="text-success">
-            {formatDayLabel(confirmation.appointment.localDate)}, {confirmation.appointment.localTime}
+            {formatDayLabel(confirmation.appointment.localDate, country)}, {confirmation.appointment.localTime}
           </p>
         </div>
 
@@ -278,7 +267,7 @@ export function BookingWizard({
             href={confirmation.manageUrl}
             className="block rounded-lg bg-brand-500 px-4 py-3 text-center font-medium text-ink-inverse"
           >
-            Gerenciar meu agendamento
+            {t.manageAppointment}
           </a>
           {confirmation.calendarUrl ? (
             <a
@@ -287,7 +276,7 @@ export function BookingWizard({
               rel="noreferrer"
               className="block rounded-lg border border-line-subtle px-4 py-3 text-center font-medium text-ink"
             >
-              Adicionar ao calendário
+              {t.addToCalendar}
             </a>
           ) : null}
           {confirmation.whatsappShareUrl ? (
@@ -297,7 +286,7 @@ export function BookingWizard({
               rel="noreferrer"
               className="block rounded-lg border border-line-subtle px-4 py-3 text-center font-medium text-ink"
             >
-              Enviar confirmação no WhatsApp
+              {t.sendWhatsappConfirmation}
             </a>
           ) : null}
         </div>
@@ -305,22 +294,17 @@ export function BookingWizard({
         {/* Convite de conta (Parte 1 §10): vem DEPOIS do valor entregue,
             nunca como requisito para agendar. */}
         <div className="rounded-xl border border-line-subtle p-5 text-center">
-          <p className="font-medium text-ink">Fique conectado com {shopName}</p>
-          <p className="mt-1 text-sm text-ink-secondary">
-            Crie sua conta gratuitamente para acompanhar seus horários, marcar de novo com
-            poucos toques e receber promoções em primeira mão.
-          </p>
+          <p className="font-medium text-ink">{t.stayConnectedTitle(shopName)}</p>
+          <p className="mt-1 text-sm text-ink-secondary">{t.stayConnectedBody}</p>
           <a
             href="/entrar-cliente"
             className="mt-3 inline-block rounded-lg border border-line-strong px-4 py-2.5 text-sm font-medium text-ink"
           >
-            Criar minha conta
+            {t.createAccount}
           </a>
         </div>
 
-        <p className="text-center text-sm text-ink-secondary">
-          Guarde o link de gerenciamento: é por ele que você cancela ou remarca.
-        </p>
+        <p className="text-center text-sm text-ink-secondary">{t.keepManageLinkHint}</p>
       </div>
     );
   }
@@ -335,7 +319,7 @@ export function BookingWizard({
 
       {alternatives.length > 0 ? (
         <div className="rounded-lg border border-line-subtle p-4">
-          <p className="mb-3 text-sm font-medium text-ink">Horários próximos:</p>
+          <p className="mb-3 text-sm font-medium text-ink">{t.nearbySlotsLabel}</p>
           <div className="flex flex-wrap gap-2">
             {alternatives.map((slot) => (
               <button
@@ -344,7 +328,7 @@ export function BookingWizard({
                 onClick={() => void selectSlot(slot)}
                 className="rounded-lg border border-line-subtle px-3 py-2 text-sm"
               >
-                {formatTime(slot.startsAt, timezone)}
+                {formatTime(slot.startsAt, timezone, country)}
               </button>
             ))}
           </div>
@@ -353,7 +337,7 @@ export function BookingWizard({
 
       {step === "servico" ? (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-ink">Escolha o serviço</h2>
+          <h2 className="mb-4 text-lg font-semibold text-ink">{t.chooseServiceTitle}</h2>
           <ul className="space-y-3">
             {services.map((item) => (
               <li key={item.id}>
@@ -369,7 +353,7 @@ export function BookingWizard({
                     <span className="block font-medium text-ink">{item.name}</span>
                     <span className="block text-sm text-ink-secondary">{item.durationMinutes} min</span>
                   </span>
-                  <span className="font-medium">{formatPrice(item.priceMinor)}</span>
+                  <span className="font-medium">{formatPrice(item.priceMinor, country)}</span>
                 </button>
               </li>
             ))}
@@ -379,7 +363,7 @@ export function BookingWizard({
 
       {step === "profissional" ? (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-ink">Com quem você quer ser atendido?</h2>
+          <h2 className="mb-4 text-lg font-semibold text-ink">{t.chooseWhoTitle}</h2>
           <div className="space-y-3">
             <button
               type="button"
@@ -389,10 +373,8 @@ export function BookingWizard({
               }}
               className="w-full rounded-xl border border-line-subtle p-4 text-left font-medium"
             >
-              Qualquer profissional
-              <span className="block text-sm font-normal text-ink-secondary">
-                Mostra todos os horários livres
-              </span>
+              {t.anyProfessional}
+              <span className="block text-sm font-normal text-ink-secondary">{t.anyProfessionalHint}</span>
             </button>
             {professionals.map((item) => (
               <button
@@ -413,29 +395,27 @@ export function BookingWizard({
 
       {step === "horario" ? (
         <section>
-          <h2 className="mb-4 text-lg font-semibold text-ink">Escolha o horário</h2>
+          <h2 className="mb-4 text-lg font-semibold text-ink">{t.chooseTimeTitle}</h2>
 
           {loadingSlots ? (
-            <p className="text-sm text-ink-secondary">Carregando horários…</p>
+            <p className="text-sm text-ink-secondary">{t.loadingSlots}</p>
           ) : days.length === 0 ? (
             <div className="rounded-lg bg-canvas p-4">
-              <p className="text-sm text-ink">
-                Não há horários livres nos próximos dias.
-              </p>
+              <p className="text-sm text-ink">{t.noSlotsMessage}</p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
                   type="button"
                   onClick={() => setStep("profissional")}
                   className="text-sm font-medium underline"
                 >
-                  Tentar com outro profissional
+                  {t.tryOtherProfessional}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep("espera")}
                   className="rounded-lg border border-line-subtle px-3 py-2 text-sm font-medium text-ink sm:ml-auto"
                 >
-                  Entrar na lista de espera
+                  {t.joinWaitlistButton}
                 </button>
               </div>
             </div>
@@ -444,7 +424,7 @@ export function BookingWizard({
               {days.map((day) => (
                 <div key={day.date}>
                   <h3 className="mb-2 text-sm font-medium text-ink first-letter:uppercase">
-                    {formatDayLabel(day.date)}
+                    {formatDayLabel(day.date, country)}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {day.slots.map((slot) => (
@@ -455,7 +435,7 @@ export function BookingWizard({
                         onClick={() => void selectSlot(slot)}
                         className="min-w-[76px] rounded-lg border border-line-subtle px-3 py-2 text-sm font-medium disabled:opacity-50"
                       >
-                        {formatTime(slot.startsAt, timezone)}
+                        {formatTime(slot.startsAt, timezone, country)}
                         {!professionalId ? (
                           <span className="block text-xs font-normal text-ink-secondary">
                             {slot.professionalName}
@@ -475,13 +455,14 @@ export function BookingWizard({
         <section>
           <div className="mb-4 rounded-lg bg-canvas p-4">
             <p className="font-medium text-ink">
-              {service?.name} com {hold.slot.professionalName}
+              {service?.name} · {hold.slot.professionalName}
             </p>
             <p className="text-sm text-ink-secondary">
-              {formatTime(hold.slot.startsAt, timezone)} · {formatPrice(hold.slot.priceMinor)}
+              {formatTime(hold.slot.startsAt, timezone, country)} ·{" "}
+              {formatPrice(hold.slot.priceMinor, country)}
             </p>
             <p className="mt-2 text-sm text-ink-secondary">
-              Guardamos este horário por mais{" "}
+              {t.holdRemainingPrefix}{" "}
               <strong className="tabular-nums text-ink">
                 {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
               </strong>
@@ -491,7 +472,7 @@ export function BookingWizard({
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label htmlFor="nome" className="mb-1 block text-sm font-medium text-ink">
-                Seu nome
+                {t.nameLabel}
               </label>
               <input
                 id="nome"
@@ -506,7 +487,7 @@ export function BookingWizard({
 
             <div>
               <label htmlFor="telefone" className="mb-1 block text-sm font-medium text-ink">
-                WhatsApp
+                {t.whatsappLabel}
               </label>
               <input
                 id="telefone"
@@ -528,7 +509,7 @@ export function BookingWizard({
                 onChange={(event) => setAcceptedTerms(event.target.checked)}
                 className="mt-1 h-5 w-5"
               />
-              <span>Aceito os termos de uso e a política de privacidade.</span>
+              <span>{t.acceptTermsLabel}</span>
             </label>
 
             {/* Promoção é escolha separada do aceite obrigatório: consentimento
@@ -540,7 +521,7 @@ export function BookingWizard({
                 onChange={(event) => setWantsPromotions(event.target.checked)}
                 className="mt-1 h-5 w-5"
               />
-              <span>Quero receber promoções de {shopName} pelo WhatsApp.</span>
+              <span>{t.wantsPromotionsLabel(shopName)}</span>
             </label>
 
             <button
@@ -548,7 +529,7 @@ export function BookingWizard({
               disabled={submitting || secondsLeft === 0}
               className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-ink-inverse disabled:opacity-50"
             >
-              {submitting ? "Confirmando…" : "Confirmar agendamento"}
+              {submitting ? t.confirmButtonLoading : t.confirmButtonIdle}
             </button>
           </form>
         </section>
@@ -556,16 +537,13 @@ export function BookingWizard({
 
       {step === "espera" ? (
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-ink">Entrar na lista de espera</h2>
-          <p className="mb-4 text-sm text-ink-secondary">
-            Avisamos assim que abrir um horário compatível — o contato é sempre feito
-            diretamente por {shopName}.
-          </p>
+          <h2 className="mb-2 text-lg font-semibold text-ink">{t.waitlistTitle}</h2>
+          <p className="mb-4 text-sm text-ink-secondary">{t.waitlistHint(shopName)}</p>
 
           <form onSubmit={joinWaitlist} className="space-y-4">
             <div>
               <label htmlFor="espera-nome" className="mb-1 block text-sm font-medium text-ink">
-                Seu nome
+                {t.nameLabel}
               </label>
               <input
                 id="espera-nome"
@@ -580,7 +558,7 @@ export function BookingWizard({
 
             <div>
               <label htmlFor="espera-telefone" className="mb-1 block text-sm font-medium text-ink">
-                WhatsApp
+                {t.whatsappLabel}
               </label>
               <input
                 id="espera-telefone"
@@ -602,9 +580,7 @@ export function BookingWizard({
                 onChange={(event) => setAcceptedTerms(event.target.checked)}
                 className="mt-1 h-5 w-5"
               />
-              <span>
-                Aceito os termos de uso e ser contatado(a) sobre esta lista de espera.
-              </span>
+              <span>{t.waitlistAcceptTerms}</span>
             </label>
 
             <button
@@ -612,7 +588,7 @@ export function BookingWizard({
               disabled={submitting}
               className="w-full rounded-lg bg-brand-500 px-4 py-3 font-medium text-ink-inverse disabled:opacity-50"
             >
-              {submitting ? "Entrando…" : "Entrar na lista de espera"}
+              {submitting ? t.waitlistSubmitLoading : t.waitlistSubmitIdle}
             </button>
           </form>
         </section>
@@ -620,10 +596,8 @@ export function BookingWizard({
 
       {step === "espera_ok" ? (
         <div className="animate-celebrate rounded-xl bg-success/12 p-5">
-          <h2 className="text-lg font-semibold text-success">Você está na lista!</h2>
-          <p className="mt-2 text-success">
-            Avisamos assim que abrir um horário compatível com o que você escolheu.
-          </p>
+          <h2 className="text-lg font-semibold text-success">{t.waitlistOkTitle}</h2>
+          <p className="mt-2 text-success">{t.waitlistOkBody}</p>
         </div>
       ) : null}
     </div>

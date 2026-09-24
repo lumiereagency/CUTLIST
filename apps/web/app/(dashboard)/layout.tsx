@@ -54,6 +54,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         companyWhatsappPhone: paymentConfig.companyWhatsapp,
         barbershopName,
         planName: plan.name,
+        country: barbershopCountry,
       }),
     }));
   }

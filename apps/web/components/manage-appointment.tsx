@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { bookingStrings } from "@/lib/booking-i18n";
 
 export function ManageActions({
   token,
@@ -13,6 +14,7 @@ export function ManageActions({
   shopPhone,
   shopName,
   whatsappText,
+  country,
 }: {
   token: string;
   canCancel: boolean;
@@ -20,7 +22,9 @@ export function ManageActions({
   shopPhone: string | null;
   shopName: string;
   whatsappText: string;
+  country: string;
 }) {
+  const t = bookingStrings(country);
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [working, setWorking] = useState(false);
@@ -42,7 +46,7 @@ export function ManageActions({
 
       if (!response.ok) {
         const body = await response.json();
-        setError(body?.error?.message ?? "Não foi possível cancelar.");
+        setError(body?.error?.message ?? t.couldNotCancel);
         return;
       }
       router.refresh();
@@ -68,9 +72,7 @@ export function ManageActions({
         confirming ? (
           // Ação destrutiva confirma antes de acontecer (Parte 3 §13)
           <div className="rounded-lg border border-error/35 p-4">
-            <p className="text-sm text-ink">
-              Tem certeza que quer cancelar? O horário volta a ficar disponível para outras pessoas.
-            </p>
+            <p className="text-sm text-ink">{t.cancelConfirmQuestion}</p>
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
@@ -78,14 +80,14 @@ export function ManageActions({
                 disabled={working}
                 className="flex-1 rounded-lg bg-error px-4 py-3 font-medium text-ink-inverse disabled:opacity-50"
               >
-                {working ? "Cancelando…" : "Sim, cancelar"}
+                {working ? t.cancelling : t.yesCancelIt}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
                 className="flex-1 rounded-lg border border-line-subtle px-4 py-3 font-medium"
               >
-                Manter
+                {t.keepIt}
               </button>
             </div>
           </div>
@@ -95,7 +97,7 @@ export function ManageActions({
             onClick={() => setConfirming(true)}
             className="w-full rounded-lg border border-line-subtle px-4 py-3 font-medium text-ink"
           >
-            Cancelar agendamento
+            {t.cancelAppointmentButton}
           </button>
         )
       ) : null}
@@ -107,7 +109,7 @@ export function ManageActions({
           rel="noreferrer"
           className="block rounded-lg border border-line-subtle px-4 py-3 text-center font-medium text-ink"
         >
-          Falar com {shopName}
+          {t.talkToShop(shopName)}
         </a>
       ) : null}
     </div>

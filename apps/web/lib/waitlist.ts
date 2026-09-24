@@ -7,7 +7,7 @@
 // de chegada).
 
 import { Prisma, prisma } from "@barber/db";
-import { normalizePhoneBR } from "@barber/domain";
+import { normalizePhone } from "@barber/domain";
 import { NotFoundError, PolicyError } from "./booking.ts";
 
 export interface JoinWaitlistInput {
@@ -32,7 +32,11 @@ export interface JoinWaitlistResult {
 }
 
 export async function joinWaitlist(input: JoinWaitlistInput): Promise<JoinWaitlistResult> {
-  const normalizedPhone = normalizePhoneBR(input.customerPhone);
+  const { country } = await prisma.barbershop.findUniqueOrThrow({
+    where: { id: input.barbershopId },
+    select: { country: true },
+  });
+  const normalizedPhone = normalizePhone(input.customerPhone, country);
 
   return prisma.$transaction(async (tx) => {
     if (input.serviceId) {

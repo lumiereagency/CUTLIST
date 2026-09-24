@@ -20,6 +20,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./countries": {
+      "types": "./dist/countries.d.ts",
+      "default": "./dist/countries.js"
+    },
+    "./money": {
+      "types": "./dist/money.d.ts",
+      "default": "./dist/money.js"
     }
   },
   "files": [

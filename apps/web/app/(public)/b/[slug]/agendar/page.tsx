@@ -30,7 +30,9 @@ export default async function BookingPage({
   if (!shop || shop.status === "SUSPENDED") notFound();
 
   const gate = await billingGate(shop.id);
-  if (gate?.blocked) return <BookingUnavailable shopName={shop.name} shopPhone={shop.phone} />;
+  if (gate?.blocked) {
+    return <BookingUnavailable shopName={shop.name} shopPhone={shop.phone} country={shop.country} />;
+  }
 
   const initialServiceId = shop.services.some((service) => service.id === searchParams.servico)
     ? searchParams.servico
@@ -59,6 +61,7 @@ export default async function BookingPage({
         }))}
         initialServiceId={initialServiceId}
         termsVersion={TERMS_VERSION}
+        country={shop.country}
       />
     </main>
   );

@@ -31,7 +31,7 @@ export interface CustomerDueForReturn {
 export async function customersDueForReturn(barbershopId: string): Promise<CustomerDueForReturn[]> {
   const shop = await prisma.barbershop.findUniqueOrThrow({
     where: { id: barbershopId },
-    select: { slug: true, name: true },
+    select: { slug: true, name: true, country: true },
   });
 
   const now = new Date();
@@ -99,6 +99,7 @@ export async function customersDueForReturn(barbershopId: string): Promise<Custo
           serviceName: appointment.service.name,
           shopName: shop.name,
           bookingUrl,
+          country: shop.country,
         }),
       };
     })

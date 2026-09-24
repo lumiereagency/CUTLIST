@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { Field, inputClass } from "./field";
+import { formatDayLabel, formatPrice } from "@/lib/booking-i18n";
 
 const TERMS_VERSION = process.env.NEXT_PUBLIC_TERMS_VERSION ?? "dev-0";
 
@@ -31,24 +32,16 @@ interface Confirmation {
   calendarUrl: string | null;
 }
 
-const formatPrice = (minor: number) =>
-  (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const formatDayLabel = (isoDate: string) =>
-  new Date(`${isoDate}T12:00:00Z`).toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
 export function VagaClaimForm({
   token,
   shopName,
   services,
+  country,
 }: {
   token: string;
   shopName: string;
   services: VagaService[];
+  country: string;
 }) {
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [name, setName] = useState("");
@@ -101,7 +94,7 @@ export function VagaClaimForm({
             {confirmation.appointment.serviceName} com {confirmation.appointment.professionalName}
           </p>
           <p className="text-success">
-            {formatDayLabel(confirmation.appointment.localDate)}, {confirmation.appointment.localTime}
+            {formatDayLabel(confirmation.appointment.localDate, country)}, {confirmation.appointment.localTime}
           </p>
         </div>
 
@@ -154,7 +147,7 @@ export function VagaClaimForm({
           >
             {services.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name} · {service.durationMinutes} min · {formatPrice(service.priceMinor)}
+                {service.name} · {service.durationMinutes} min · {formatPrice(service.priceMinor, country)}
               </option>
             ))}
           </select>
@@ -162,7 +155,7 @@ export function VagaClaimForm({
       ) : services.length === 1 && services[0] ? (
         <p className="text-sm text-ink-secondary">
           {services[0].name} · {services[0].durationMinutes} min ·{" "}
-          {formatPrice(services[0].priceMinor)}
+          {formatPrice(services[0].priceMinor, country)}
         </p>
       ) : null}
 

@@ -2,17 +2,9 @@ import { notFound } from "next/navigation";
 import { instantToLocalDate, instantToLocalTime } from "@barber/domain";
 import { findByManagementToken } from "@/lib/booking";
 import { ManageActions } from "@/components/manage-appointment";
+import { bookingStrings, formatDayLabel, formatPrice } from "@/lib/booking-i18n";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_LABEL: Record<string, string> = {
-  CONFIRMED: "Confirmado",
-  CANCELLED_BY_CUSTOMER: "Cancelado por você",
-  CANCELLED_BY_SHOP: "Cancelado pela equipe",
-  COMPLETED: "Atendimento concluído",
-  NO_SHOW: "Você não compareceu",
-  RESCHEDULED: "Remarcado",
-};
 
 export default async function ManageAppointmentPage({ params }: { params: { token: string } }) {
   const appointment = await findByManagementToken(params.token);
@@ -27,29 +19,35 @@ export default async function ManageAppointmentPage({ params }: { params: { toke
   }
 
   const shop = appointment.barbershop;
+  const t = bookingStrings(shop.country);
   const active = appointment.status === "CONFIRMED";
   const noticeLimit = new Date(Date.now() + shop.cancellationNoticeMinutes * 60000);
   const withinNotice = appointment.startsAt > noticeLimit;
 
   const localDate = instantToLocalDate(appointment.startsAt, shop.timezone);
   const localTime = instantToLocalTime(appointment.startsAt, shop.timezone);
-  const dayLabel = new Date(`${localDate}T12:00:00Z`).toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  const dayLabel = formatDayLabel(localDate, shop.country);
+
+  const STATUS_LABEL: Record<string, string> = {
+    CONFIRMED: t.statusConfirmed,
+    CANCELLED_BY_CUSTOMER: t.statusCancelledByCustomer,
+    CANCELLED_BY_SHOP: t.statusCancelledByShop,
+    COMPLETED: t.statusCompleted,
+    NO_SHOW: t.statusNoShow,
+    RESCHEDULED: t.statusRescheduled,
+  };
 
   let blockedReason: string | null = null;
-  if (!active) blockedReason = "Este agendamento não está mais ativo.";
+  if (!active) blockedReason = t.notActiveAnymore;
   else if (!withinNotice) {
-    blockedReason = `Passou do prazo para alterar pelo link. Fale direto com ${shop.name}.`;
+    blockedReason = t.pastNoticeDeadline(shop.name);
   }
 
   return (
     <main className="mx-auto min-h-screen max-w-lg bg-surface-1 px-5 py-8">
       <header className="mb-6">
         <p className="text-sm text-ink-secondary">{shop.name}</p>
-        <h1 className="mt-1 text-2xl font-semibold text-ink">Seu agendamento</h1>
+        <h1 className="mt-1 text-2xl font-semibold text-ink">{t.manageTitle}</h1>
       </header>
 
       <section
@@ -61,16 +59,13 @@ export default async function ManageAppointmentPage({ params }: { params: { toke
         <p className="mt-2 text-lg font-semibold text-ink">
           {appointment.serviceNameSnapshot}
         </p>
-        <p className="text-ink">com {appointment.professionalNameSnapshot}</p>
+        <p className="text-ink">
+          {t.withProfessional} {appointment.professionalNameSnapshot}
+        </p>
         <p className="mt-1 text-ink first-letter:uppercase">
           {dayLabel}, {localTime}
         </p>
-        <p className="mt-2 text-ink">
-          {(appointment.priceSnapshotMinor / 100).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-        </p>
+        <p className="mt-2 text-ink">{formatPrice(appointment.priceSnapshotMinor, shop.country)}</p>
       </section>
 
       {shop.cancellationPolicy ? (
@@ -78,9 +73,9 @@ export default async function ManageAppointmentPage({ params }: { params: { toke
       ) : null}
 
       <p className="mt-4 text-sm text-ink-secondary">
-        Quer ver todos os seus horários num lugar só?{" "}
+        {t.seeAllAppointmentsHint}{" "}
         <a href="/entrar-cliente" className="font-medium text-ink underline">
-          Criar conta
+          {t.createAccountLink}
         </a>
       </p>
 
@@ -91,7 +86,8 @@ export default async function ManageAppointmentPage({ params }: { params: { toke
           blockedReason={blockedReason}
           shopPhone={shop.phone}
           shopName={shop.name}
-          whatsappText={`Olá! Sobre meu agendamento de ${appointment.serviceNameSnapshot} em ${dayLabel} às ${localTime}.`}
+          country={shop.country}
+          whatsappText={t.whatsappAboutAppointment(appointment.serviceNameSnapshot, dayLabel, localTime)}
         />
       </div>
     </main>
