@@ -11,6 +11,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { bookingStrings, formatDayLabel, formatPrice, formatTime } from "@/lib/booking-i18n";
+import { PushSubscribeButton } from "@/components/push-subscribe-button";
+import { subscribeCustomerPush, unsubscribeCustomerPush } from "@/app/(public)/push-actions";
 
 interface Service {
   id: string;
@@ -290,6 +292,15 @@ export function BookingWizard({
             </a>
           ) : null}
         </div>
+
+        <PushSubscribeButton
+          subscribe={(subscription) =>
+            subscribeCustomerPush(confirmation.manageUrl.split("/").pop() ?? "", subscription)
+          }
+          unsubscribe={unsubscribeCustomerPush}
+          labels={t.pushNotifications}
+          className="flex justify-center"
+        />
 
         {/* Convite de conta (Parte 1 §10): vem DEPOIS do valor entregue,
             nunca como requisito para agendar. */}

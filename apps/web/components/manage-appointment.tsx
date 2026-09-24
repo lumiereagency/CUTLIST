@@ -6,6 +6,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { bookingStrings } from "@/lib/booking-i18n";
+import { PushSubscribeButton } from "@/components/push-subscribe-button";
+import { subscribeCustomerPush, unsubscribeCustomerPush } from "@/app/(public)/push-actions";
 
 export function ManageActions({
   token,
@@ -112,6 +114,13 @@ export function ManageActions({
           {t.talkToShop(shopName)}
         </a>
       ) : null}
+
+      <PushSubscribeButton
+        subscribe={(subscription) => subscribeCustomerPush(token, subscription)}
+        unsubscribe={unsubscribeCustomerPush}
+        labels={t.pushNotifications}
+        className="flex justify-center"
+      />
     </div>
   );
 }

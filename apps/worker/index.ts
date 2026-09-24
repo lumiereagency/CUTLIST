@@ -17,6 +17,11 @@ import {
 } from "@barber/integrations";
 import { recomputeCustomerCrm } from "./handlers/crm.ts";
 import { detectSmartOpportunity } from "./handlers/smart-opportunity.ts";
+import {
+  checkAppointmentReminders,
+  notifyAppointmentCancelled,
+  notifyNewBooking,
+} from "./handlers/push.ts";
 
 const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 5;
@@ -47,6 +52,17 @@ const HANDLERS: Record<string, Handler> = {
 
   DETECT_SMART_OPPORTUNITY: (payload) =>
     detectSmartOpportunity({ appointmentId: String(payload.appointmentId) }),
+
+  // Push é efeito à parte do calendário — eventos próprios, não reaproveita
+  // APPOINTMENT_CONFIRMED/APPOINTMENT_CANCELLED (um evento só chama um
+  // handler no HANDLERS atual).
+  NOTIFY_NEW_BOOKING: (payload) =>
+    notifyNewBooking({ appointmentId: String(payload.appointmentId) }),
+  NOTIFY_APPOINTMENT_CANCELLED: (payload) =>
+    notifyAppointmentCancelled({
+      appointmentId: String(payload.appointmentId),
+      actorType: payload.actorType as "CUSTOMER" | "STAFF" | "SYSTEM",
+    }),
 };
 
 /// Espera exponencial: 1min, 2min, 4min… Falha transitória de rede não deve
@@ -157,6 +173,12 @@ export async function expireSmartOpportunities(): Promise<number> {
 const RECONCILE_INTERVAL_MS = 5 * 60_000;
 let proximaReconciliacao = 0;
 
+/// Lembrete também é varredura (não existe evento de domínio pra "faltam 2h
+/// pro horário") — intervalo mais curto que a reconciliação porque o alvo é
+/// uma janela de tempo estreita (REMINDER_WINDOW_MS em handlers/push.ts).
+const REMINDER_SWEEP_INTERVAL_MS = 5 * 60_000;
+let proximaVarreduraLembrete = 0;
+
 async function tick(): Promise<void> {
   const liberados = await purgeExpiredHolds();
   const vagasExpiradas = await expireSmartOpportunities();
@@ -173,10 +195,20 @@ async function tick(): Promise<void> {
     });
   }
 
-  if (liberados || vagasExpiradas || processados || falhas || reconciliados) {
+  let lembretesEnviados = 0;
+  if (Date.now() >= proximaVarreduraLembrete) {
+    proximaVarreduraLembrete = Date.now() + REMINDER_SWEEP_INTERVAL_MS;
+    lembretesEnviados = await checkAppointmentReminders().catch((error: unknown) => {
+      console.error("[worker] varredura de lembrete falhou:", error);
+      return 0;
+    });
+  }
+
+  if (liberados || vagasExpiradas || processados || falhas || reconciliados || lembretesEnviados) {
     console.info(
       `[worker] holds liberados: ${liberados}, vagas expiradas: ${vagasExpiradas}, ` +
-        `eventos: ${processados}, falhas: ${falhas}, reconciliados: ${reconciliados}`
+        `eventos: ${processados}, falhas: ${falhas}, reconciliados: ${reconciliados}, ` +
+        `lembretes: ${lembretesEnviados}`
     );
   }
 }

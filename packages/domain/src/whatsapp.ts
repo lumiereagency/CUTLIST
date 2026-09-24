@@ -34,7 +34,9 @@ function firstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
-function isSpanish(country: string): boolean {
+/// Exportado porque outros canais fora do WhatsApp (push notification, Marco
+/// "notificações") precisam da mesma decisão de idioma por país.
+export function isSpanish(country: string): boolean {
   return country !== "BR";
 }
 

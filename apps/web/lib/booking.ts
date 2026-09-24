@@ -301,6 +301,16 @@ export async function confirmAppointment(
       },
     });
 
+    // Avisa a equipe por push — só reserva feita pelo próprio cliente
+    // (createdByType CUSTOMER, garantido aqui: este é o caminho público).
+    await tx.outboxEvent.create({
+      data: {
+        barbershopId: hold.barbershopId,
+        type: "NOTIFY_NEW_BOOKING",
+        payload: { appointmentId: appointment.id },
+      },
+    });
+
     void barbershop;
     return { appointmentId: appointment.id, managementToken };
   });
@@ -358,6 +368,17 @@ export async function cancelAppointment(input: CancelInput): Promise<void> {
         barbershopId: appointment.barbershopId,
         type: "APPOINTMENT_CANCELLED",
         payload: { appointmentId: appointment.id },
+      },
+    });
+
+    // Avisa por push sempre o lado que NÃO cancelou — actorType vai no
+    // payload porque, ao contrário do calendário, aqui importa quem agiu,
+    // não só o que mudou.
+    await tx.outboxEvent.create({
+      data: {
+        barbershopId: appointment.barbershopId,
+        type: "NOTIFY_APPOINTMENT_CANCELLED",
+        payload: { appointmentId: appointment.id, actorType: input.actorType },
       },
     });
 
@@ -621,6 +642,15 @@ async function changeStatus(
           barbershopId: appointment.barbershopId,
           type: "DETECT_SMART_OPPORTUNITY",
           payload: { appointmentId: appointment.id },
+        },
+      });
+      // Avisa o cliente por push, se ele tiver inscrição — ver
+      // apps/worker/handlers/push.ts.
+      await tx.outboxEvent.create({
+        data: {
+          barbershopId: appointment.barbershopId,
+          type: "NOTIFY_APPOINTMENT_CANCELLED",
+          payload: { appointmentId: appointment.id, actorType: "STAFF" },
         },
       });
     }

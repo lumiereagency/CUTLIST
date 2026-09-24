@@ -185,6 +185,7 @@ model Barbershop {
   integrationConnections IntegrationConnection[]
   calendarSyncs       AppointmentCalendarSync[]
   subscription        Subscription?
+  pushSubscriptions   PushSubscription[]
   usageCounters       UsageCounter[]
   auditLogs           AuditLog[]
 
@@ -271,6 +272,7 @@ model User {
 
   memberships BarbershopMembership[]
   sessions    UserSession[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -620,6 +622,7 @@ model BarbershopCustomer {
   consents            Consent[]
   promotionRedemptions PromotionRedemption[]
   returnScore         CustomerReturnScore?
+  pushSubscriptions   PushSubscription[]
 
   @@unique([barbershopId, normalizedPhone])
   @@index([barbershopId, customerId])
@@ -739,6 +742,10 @@ model Appointment {
   /// Concorrência otimista para edição simultânea no painel (§5.4)
   version       Int       @default(0)
 
+  /// Marca que o push de lembrete já saiu, pra a varredura do worker (a cada
+  /// poucos minutos) não mandar duas vezes pro mesmo agendamento.
+  reminderPushSentAt DateTime? @map("reminder_push_sent_at") @db.Timestamptz(3)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -753,6 +760,10 @@ model Appointment {
   @@index([barbershopId, professionalId, startsAt])
   @@index([barbershopId, startsAt])
   @@index([barbershopCustomerId, startsAt])
+  // A varredura de lembrete do worker (status CONFIRMED + reminder_push_sent_at
+  // nulo + janela de tempo) usa um índice PARCIAL definido à mão em
+  // migration.sql — Prisma não expressa índice parcial na DSL do schema,
+  // mesmo padrão já usado aqui para a EXCLUDE USING gist acima.
   @@map("appointments")
 }
 
@@ -767,6 +778,37 @@ enum AppointmentStatus {
   RESCHEDULED
 
   @@map("appointment_status")
+}
+
+/// Inscrição de push (Web Push/PWA) de UM dispositivo — diferente do WhatsApp
+/// (link manual, ninguém "assina" nada), push é uma permissão de verdade do
+/// navegador: dono ("userId") ou cliente final ("barbershopCustomerId"), nunca
+/// os dois, e a aplicação valida essa exclusividade (não expressável como
+/// constraint simples do Prisma). Uma pessoa pode ter várias linhas — cada
+/// aparelho/navegador em que ela aceitou é uma inscrição própria.
+model PushSubscription {
+  id           String     @id @default(uuid()) @db.Uuid
+  barbershopId String     @map("barbershop_id") @db.Uuid
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  userId String? @map("user_id") @db.Uuid
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  barbershopCustomerId String?             @map("barbershop_customer_id") @db.Uuid
+  barbershopCustomer   BarbershopCustomer? @relation(fields: [barbershopCustomerId], references: [id], onDelete: Cascade)
+
+  /// URL do endpoint do serviço de push do navegador (FCM, Mozilla, Apple...) —
+  /// único por natureza, é o identificador do dispositivo/navegador inscrito.
+  endpoint String @unique
+  /// Chaves de criptografia da inscrição (protocolo Web Push, RFC 8291)
+  p256dh   String
+  auth     String
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([barbershopId, userId])
+  @@index([barbershopId, barbershopCustomerId])
+  @@map("push_subscriptions")
 }
 
 enum AppointmentSource {

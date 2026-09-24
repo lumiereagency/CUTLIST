@@ -476,10 +476,16 @@ describe("efeitos assíncronos", () => {
     const { holdToken } = await booking.createHold(holdInput());
     const { appointmentId } = await confirm(holdToken);
 
+    // Dois efeitos assíncronos saem da confirmação: sincronizar calendário
+    // (APPOINTMENT_CONFIRMED) e avisar a equipe por push (NOTIFY_NEW_BOOKING,
+    // ver apps/worker/handlers/push.ts) — nenhum dos dois trava a reserva.
     const eventos = await prisma.outboxEvent.findMany({ where: { barbershopId: SHOP } });
-    assert.equal(eventos.length, 1);
-    assert.equal(eventos[0].type, "APPOINTMENT_CONFIRMED");
-    assert.equal(eventos[0].status, "PENDING");
-    assert.equal(eventos[0].payload.appointmentId, appointmentId);
+    assert.equal(eventos.length, 2);
+    for (const evento of eventos) {
+      assert.equal(evento.status, "PENDING");
+      assert.equal(evento.payload.appointmentId, appointmentId);
+    }
+    const tipos = eventos.map((evento) => evento.type).sort();
+    assert.deepEqual(tipos, ["APPOINTMENT_CONFIRMED", "NOTIFY_NEW_BOOKING"]);
   });
 });

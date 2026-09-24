@@ -3,6 +3,18 @@ import { parseBranding } from "@barber/domain";
 import { requirePermission } from "@/lib/auth";
 import { BarbershopSettingsForm } from "@/components/barbershop-settings-form";
 import { PublicLinkBox } from "@/components/public-link-box";
+import { PushSubscribeButton } from "@/components/push-subscribe-button";
+import { subscribeStaffPush, unsubscribeStaffPush } from "@/app/(dashboard)/push-actions";
+
+const PUSH_LABELS = {
+  activate: "Ativar notificações neste aparelho",
+  activating: "Ativando…",
+  active: "Notificações ativas neste aparelho",
+  deactivate: "desativar",
+  iosHint: "No iPhone, adicione a Cutlist à Tela de Início para poder ativar.",
+  blocked: "Notificações bloqueadas nas configurações do navegador.",
+  error: "Não foi possível ativar agora. Tente de novo.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +40,20 @@ export default async function SettingsPage() {
       </header>
 
       <PublicLinkBox url={publicUrl} />
+
+      <div className="rounded-2xl border border-line-subtle bg-surface-1 p-5">
+        <h2 className="font-medium text-ink">Notificações no celular</h2>
+        <p className="mt-1 text-sm text-ink-secondary">
+          Receba um aviso neste aparelho sempre que um cliente marcar ou cancelar um horário pela
+          página pública. É por dispositivo — ative em cada celular ou computador que a equipe usa.
+        </p>
+        <PushSubscribeButton
+          subscribe={subscribeStaffPush}
+          unsubscribe={unsubscribeStaffPush}
+          labels={PUSH_LABELS}
+          className="mt-3"
+        />
+      </div>
 
       {canWrite ? (
         <BarbershopSettingsForm

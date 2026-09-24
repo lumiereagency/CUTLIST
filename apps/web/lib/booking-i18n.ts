@@ -121,6 +121,16 @@ interface BookingStrings {
   cancelling: string;
   cancelAppointmentButton: string;
   talkToShop: (shopName: string) => string;
+  // Notificação push (opcional, ver push-subscribe-button.tsx)
+  pushNotifications: {
+    activate: string;
+    activating: string;
+    active: string;
+    deactivate: string;
+    iosHint: string;
+    blocked: string;
+    error: string;
+  };
 }
 
 const PT: BookingStrings = {
@@ -192,6 +202,15 @@ const PT: BookingStrings = {
   cancelling: "Cancelando…",
   cancelAppointmentButton: "Cancelar agendamento",
   talkToShop: (shopName) => `Falar com ${shopName}`,
+  pushNotifications: {
+    activate: "Ativar notificações",
+    activating: "Ativando…",
+    active: "Notificações ativas",
+    deactivate: "desativar",
+    iosHint: "Adicione à Tela de Início para receber notificações.",
+    blocked: "Notificações bloqueadas no navegador.",
+    error: "Não foi possível ativar agora. Tente de novo.",
+  },
 };
 
 const ES: BookingStrings = {
@@ -263,6 +282,15 @@ const ES: BookingStrings = {
   cancelling: "Cancelando…",
   cancelAppointmentButton: "Cancelar turno",
   talkToShop: (shopName) => `Hablar con ${shopName}`,
+  pushNotifications: {
+    activate: "Activar notificaciones",
+    activating: "Activando…",
+    active: "Notificaciones activas",
+    deactivate: "desactivar",
+    iosHint: "Agregá a la pantalla de inicio para recibir notificaciones.",
+    blocked: "Notificaciones bloqueadas en el navegador.",
+    error: "No pudimos activarlas ahora. Probá de nuevo.",
+  },
 };
 
 export function bookingStrings(country: string): BookingStrings {
