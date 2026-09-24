@@ -36,6 +36,7 @@ export interface BillingGate {
   planCode: string;
   planName: string;
   priceMinor: number;
+  currency: string;
   currentPeriodEnd: Date | null;
   paymentReportedAt: Date | null;
 }
@@ -47,7 +48,7 @@ export interface BillingGate {
 export async function billingGate(barbershopId: string): Promise<BillingGate | null> {
   const subscription = await prisma.subscription.findUnique({
     where: { barbershopId },
-    include: { plan: { select: { code: true, name: true, priceMinor: true } } },
+    include: { plan: { select: { code: true, name: true, priceMinor: true, currency: true } } },
   });
   if (!subscription) return null;
 
@@ -59,6 +60,7 @@ export async function billingGate(barbershopId: string): Promise<BillingGate | n
     planCode: subscription.plan.code,
     planName: subscription.plan.name,
     priceMinor: subscription.plan.priceMinor,
+    currency: subscription.plan.currency,
     currentPeriodEnd: subscription.currentPeriodEnd,
     paymentReportedAt: subscription.paymentReportedAt,
   };
@@ -68,15 +70,18 @@ export interface PlanOption {
   code: string;
   name: string;
   priceMinor: number;
+  currency: string;
 }
 
 /// Planos que a barbearia pode escolher na tela de cobrança — quem decide
 /// qual pagar é ela, não a gente (ver a conversa que motivou isto: a queixa
 /// era a tela travar todo mundo num único plano fixo, sem opção de trocar).
-export async function activePlans(): Promise<PlanOption[]> {
+/// Escopado por país (Marco 7): cada país tem seu próprio preço/moeda, e uma
+/// barbearia nunca deveria ver plano de outro país pra escolher.
+export async function activePlans(country: string): Promise<PlanOption[]> {
   return prisma.plan.findMany({
-    where: { active: true },
+    where: { active: true, country },
     orderBy: { priceMinor: "asc" },
-    select: { code: true, name: true, priceMinor: true },
+    select: { code: true, name: true, priceMinor: true, currency: true },
   });
 }

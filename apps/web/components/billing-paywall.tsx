@@ -51,8 +51,9 @@ export function BillingPaywall({
 
         <div className="rounded-2xl border border-line-subtle bg-surface-1 p-6">
           <p className="text-sm leading-relaxed text-ink-secondary">
-            O acesso ao painel fica pausado até a confirmação do pagamento. Pague com o código Pix
-            abaixo e avise a equipe — a liberação é conferida à mão e costuma ser rápida.
+            O acesso ao painel fica pausado até a confirmação do pagamento. Pague com o{" "}
+            {proPlan.methodLabel} abaixo e avise quem recebe — a liberação é conferida à mão e
+            costuma ser rápida.
           </p>
 
           <div className="mt-4 rounded-xl border border-brand-500/50 bg-brand-soft p-4">

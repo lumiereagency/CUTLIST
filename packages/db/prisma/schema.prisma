@@ -45,7 +45,10 @@ model Organization {
 
 model Plan {
   id         String   @id @default(uuid()) @db.Uuid
-  code       String   @unique // "essential" | "pro"
+  code       String // "base" | "pro"
+  /// ISO-3166 alpha-2. Cada país tem seu próprio preço/moeda para o mesmo
+  /// código de plano — por isso a unicidade é (code, country), não code sozinho.
+  country    String   @default("BR")
   name       String
   priceMinor Int      @map("price_minor")
   currency   String   @default("BRL")
@@ -59,6 +62,7 @@ model Plan {
 
   subscriptions Subscription[]
 
+  @@unique([code, country])
   @@map("plans")
 }
 
@@ -68,6 +72,11 @@ model PlatformAdminUser {
   name         String
   email        String    @unique
   passwordHash String    @map("password_hash")
+  /// Vazio = vê e confirma pagamento de todos os países (admin "geral", o
+  /// caso de hoje). Preenchido (ex.: ["PY", "UY"]) = só vê negócios desses
+  /// países — usado para dar acesso a um parceiro regional sem expor o resto
+  /// da base de clientes.
+  countryScope String[] @default([]) @map("country_scope")
   active       Boolean   @default(true)
   lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(3)
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -130,6 +139,9 @@ model Barbershop {
   name     String
   slug     String  @unique
   timezone String  @default("America/Sao_Paulo") // IANA, nunca offset fixo (§7)
+  /// ISO-3166 alpha-2 ("BR", "PY", "UY", ...). Decide idioma, plano/preço e
+  /// instruções de pagamento mostrados pra essa loja — ver Marco 7.
+  country  String  @default("BR")
   phone    String?
   /// { street, number, complement, district, city, state, postalCode }
   address  Json?

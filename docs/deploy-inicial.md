@@ -91,6 +91,15 @@ PIX_KEY=<chave Pix que recebe a assinatura — CPF/CNPJ, e-mail, telefone ou ale
 PIX_MERCHANT_NAME=<nome do beneficiário exibido no Pix, sem acento>
 PIX_MERCHANT_CITY=<cidade do beneficiário, sem acento>
 COMPANY_WHATSAPP_NUMBER=<número com DDI+DDD que recebe o aviso de pagamento>
+
+# Cobrança para lojas cadastradas com country=PY/UY (Marco 7): mesmo esquema
+# do Pix acima, mas via Alias (transferência bancária local). Sem isto, uma
+# loja paraguaia/uruguaia bloqueada não vê tela de pagamento (mesma regra de
+# "nunca travar por falha de config nossa").
+ALIAS_PY=<Alias de quem recebe no Paraguai — celular, e-mail ou CI/RUC>
+COMPANY_WHATSAPP_PY=<número que recebe o aviso de pagamento do Paraguai>
+ALIAS_UY=<Alias de quem recebe no Uruguai>
+COMPANY_WHATSAPP_UY=<número que recebe o aviso de pagamento do Uruguai>
 ```
 
 `DATABASE_URL`/`REDIS_URL` apontam para `postgres`/`redis` porque esses são os
@@ -210,6 +219,18 @@ docker run --rm --network barber_internal --env-file .env.prod \
 
 Rodar de novo com o mesmo e-mail troca a senha (é upsert) — útil se perder o
 acesso. A senha exigida é a mesma regra do login da equipe: 10+ caracteres.
+
+**Admin regional (Marco 7)** — pra dar acesso a um parceiro que só deve ver
+e confirmar pagamento de um país específico (ex.: Paraguai), passe um quarto
+argumento com os códigos separados por vírgula:
+
+```bash
+docker run --rm --network barber_internal --env-file .env.prod \
+  barber-migrate node packages/db/scripts/create-platform-admin.mjs \
+  "Nome do Parceiro" "parceiro@exemplo.com" "senha-forte-aqui" "PY"
+```
+
+Sem esse argumento, o admin continua vendo todos os países, como sempre.
 
 ## 6. Verificar
 

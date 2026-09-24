@@ -28,10 +28,15 @@ async function hashPassword(password) {
   return ["scrypt", COST, BLOCK_SIZE, PARALLELIZATION, salt.toString("base64"), derived.toString("base64")].join("$");
 }
 
-const [name, emailRaw, password] = process.argv.slice(2);
+// Escopo por país é opcional (Marco 7) — quarto argumento, códigos
+// separados por vírgula (ex.: "PY,UY"). Sem ele, o admin vê e confirma
+// pagamento de todos os países, igual sempre foi.
+const [name, emailRaw, password, countryScopeRaw] = process.argv.slice(2);
 
 if (!name || !emailRaw || !password) {
-  console.error('uso: node create-platform-admin.mjs "Nome" email@exemplo.com "senha-forte"');
+  console.error(
+    'uso: node create-platform-admin.mjs "Nome" email@exemplo.com "senha-forte" [PY,UY]'
+  );
   process.exit(1);
 }
 if (password.length < 10) {
@@ -40,14 +45,18 @@ if (password.length < 10) {
 }
 
 const email = emailRaw.trim().toLowerCase();
+const countryScope = countryScopeRaw
+  ? countryScopeRaw.split(",").map((code) => code.trim().toUpperCase()).filter(Boolean)
+  : [];
 const prisma = new PrismaClient();
 
 const passwordHash = await hashPassword(password);
 const admin = await prisma.platformAdminUser.upsert({
   where: { email },
-  update: { name, passwordHash, active: true },
-  create: { name, email, passwordHash },
+  update: { name, passwordHash, active: true, countryScope },
+  create: { name, email, passwordHash, countryScope },
 });
 
-console.log(`Admin pronto: ${admin.email} (id ${admin.id})`);
+const escopo = admin.countryScope.length > 0 ? admin.countryScope.join(", ") : "todos os países";
+console.log(`Admin pronto: ${admin.email} (id ${admin.id}) — escopo: ${escopo}`);
 await prisma.$disconnect();

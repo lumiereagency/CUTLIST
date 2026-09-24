@@ -9,6 +9,7 @@ import { prisma } from "@barber/db";
 import {
   WeakPasswordError,
   hashPassword,
+  isValidCountry,
   isValidSlug,
   nextSlugCandidate,
   slugify,
@@ -36,6 +37,7 @@ export interface SignUpInput {
   password: string;
   barbershopName: string;
   timezone: string;
+  country: string;
   desiredSlug?: string;
 }
 
@@ -80,6 +82,9 @@ export async function signUpOwner(input: SignUpInput): Promise<SignUpResult> {
     throw new Error("Fuso horário inválido");
   }
 
+  const country = input.country || "BR";
+  if (!isValidCountry(country)) throw new Error("País inválido");
+
   const base = slugify(input.desiredSlug || input.barbershopName);
   if (!base) throw new InvalidSlugError();
   if (input.desiredSlug && !isValidSlug(base)) throw new InvalidSlugError();
@@ -98,6 +103,7 @@ export async function signUpOwner(input: SignUpInput): Promise<SignUpResult> {
           name: input.barbershopName.trim(),
           slug,
           timezone: input.timezone,
+          country,
         },
       });
 
@@ -112,8 +118,11 @@ export async function signUpOwner(input: SignUpInput): Promise<SignUpResult> {
 
       // Toda barbearia nasce em trial no Pro — sem isso, ninguém veria a
       // Agenda Inteligente ou os relatórios avançados sem uma assinatura paga
-      // primeiro, e o Marco 7 (cobrança) ainda não existe para vender uma.
-      const proPlan = await tx.plan.findUniqueOrThrow({ where: { code: "pro" } });
+      // primeiro. O plano é o do país da loja: cada país tem seu próprio
+      // preço/moeda (Marco 7).
+      const proPlan = await tx.plan.findUniqueOrThrow({
+        where: { code_country: { code: "pro", country } },
+      });
       const trialStart = new Date();
       const trialEnd = new Date(trialStart.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
       await tx.subscription.create({

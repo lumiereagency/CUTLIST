@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { signUp, type FormState } from "../actions";
@@ -10,9 +11,17 @@ import { PRODUCT_NAME } from "@barber/config";
 
 const initialState: FormState = {};
 
+// Só o Brasil tem múltiplos fusos de verdade — os demais países entram com
+// um só, então não faz sentido perguntar região deles também (o funil fica
+// "país" primeiro, e só o Brasil abre uma segunda pergunta).
+const COUNTRIES = [
+  { value: "BR", label: "Brasil", timezone: null },
+  { value: "PY", label: "Paraguai", timezone: "America/Asuncion" },
+];
+
 // Fusos do Brasil. O campo é obrigatório porque sem ele a agenda não existe,
 // mas ninguém deveria precisar pensar nisso: o padrão cobre a maioria.
-const TIMEZONES = [
+const BR_TIMEZONES = [
   { value: "America/Sao_Paulo", label: "Brasília, São Paulo, Sul e Sudeste" },
   { value: "America/Manaus", label: "Manaus, Cuiabá, Porto Velho" },
   { value: "America/Belem", label: "Belém, Fortaleza, Recife, Salvador" },
@@ -35,6 +44,8 @@ function SubmitButton() {
 
 export default function SignUpPage() {
   const [state, formAction] = useFormState(signUp, initialState);
+  const [country, setCountry] = useState("BR");
+  const selectedCountry = COUNTRIES.find((item) => item.value === country) ?? COUNTRIES[0]!;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-canvas px-5 py-10">
@@ -70,15 +81,34 @@ export default function SignUpPage() {
               <input id="barbershopName" name="barbershopName" required className={inputClass} />
             </Field>
 
-            <Field label="Onde fica seu negócio">
-              <select id="timezone" name="timezone" defaultValue="America/Sao_Paulo" className={inputClass}>
-                {TIMEZONES.map((zone) => (
-                  <option key={zone.value} value={zone.value}>
-                    {zone.label}
+            <Field label="País">
+              <select
+                name="country"
+                value={country}
+                onChange={(event) => setCountry(event.target.value)}
+                className={inputClass}
+              >
+                {COUNTRIES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
                   </option>
                 ))}
               </select>
             </Field>
+
+            {selectedCountry.timezone ? (
+              <input type="hidden" name="timezone" value={selectedCountry.timezone} />
+            ) : (
+              <Field label="Onde fica seu negócio">
+                <select id="timezone" name="timezone" defaultValue="America/Sao_Paulo" className={inputClass}>
+                  {BR_TIMEZONES.map((zone) => (
+                    <option key={zone.value} value={zone.value}>
+                      {zone.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
 
             <hr className="border-line-subtle" />
 

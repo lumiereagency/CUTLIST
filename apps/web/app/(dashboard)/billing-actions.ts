@@ -11,7 +11,10 @@ import { requireSession } from "@/lib/auth";
 export async function reportPixPayment(planCode: string): Promise<void> {
   const session = await requireSession();
 
-  const plan = await prisma.plan.findUnique({ where: { code: planCode }, select: { id: true, active: true } });
+  const plan = await prisma.plan.findUnique({
+    where: { code_country: { code: planCode, country: session.barbershopCountry } },
+    select: { id: true, active: true },
+  });
   if (!plan || !plan.active) {
     // Código de plano inválido/inativo não deveria acontecer vindo da nossa
     // própria tela — ignora a troca de plano, mas ainda registra o aviso.

@@ -62,6 +62,7 @@ export async function signUp(_state: FormState, formData: FormData): Promise<For
     password: String(formData.get("password") ?? ""),
     barbershopName: String(formData.get("barbershopName") ?? "").trim(),
     timezone: String(formData.get("timezone") ?? "America/Sao_Paulo"),
+    country: String(formData.get("country") ?? "BR"),
   };
 
   if (!input.ownerName || !input.email || !input.barbershopName) {

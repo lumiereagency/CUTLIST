@@ -1,14 +1,12 @@
 import { redirect } from "next/navigation";
-import { can, buildPixCopyPaste, paymentReportMessage } from "@barber/domain";
+import { can, buildPixCopyPaste, formatPlanPrice, paymentReportMessage } from "@barber/domain";
 import { activePlans, billingGate } from "@barber/entitlements";
 import { getSession } from "@/lib/auth";
+import { paymentConfigForCountry } from "@/lib/payment-config";
 import { BillingPaywall } from "@/components/billing-paywall";
 import { RenewalReminderBanner } from "@/components/renewal-reminder-banner";
 import { DashboardNav, type DashboardNavItem } from "@/components/dashboard-nav";
 import { PRODUCT_NAME } from "@barber/config";
-
-const money = (minor: number) =>
-  (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const DIAS_PARA_LEMBRETE = 3;
 
@@ -21,32 +19,39 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await getSession();
   if (!session) redirect("/entrar");
   const barbershopName = session.barbershopName;
+  const barbershopCountry = session.barbershopCountry;
 
   // Bloqueio de cobrança (§19 #3) vem antes de qualquer outra coisa: sem
   // acesso pago, nada do resto do painel deveria renderizar.
   const gate = await billingGate(session.barbershopId);
 
-  // Código Pix de um plano específico — usado tanto pelo bloqueio total
-  // quanto pelo lembrete não-bloqueante dos últimos dias, então monta uma
-  // vez só e cada chamador decide o que fazer com a lista.
+  // Instruções de pagamento de um plano específico — usadas tanto pelo
+  // bloqueio total quanto pelo lembrete não-bloqueante dos últimos dias,
+  // então monta uma vez só e cada chamador decide o que fazer com a lista.
+  // Pix (Brasil) ou Alias (Paraguai/Uruguai) conforme o país da loja —
+  // Marco 7.
   async function pixPlanOptions() {
-    const pixKey = process.env.PIX_KEY;
-    const companyWhatsapp = process.env.COMPANY_WHATSAPP_NUMBER;
-    if (!pixKey || !companyWhatsapp || !gate) return [];
-    const plans = await activePlans();
+    const paymentConfig = paymentConfigForCountry(barbershopCountry);
+    if (!paymentConfig || !gate) return [];
+    const plans = await activePlans(barbershopCountry);
     return plans.map((plan) => ({
       code: plan.code,
       name: plan.name,
-      amountLabel: money(plan.priceMinor),
-      pixCode: buildPixCopyPaste({
-        pixKey,
-        merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
-        merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
-        amountMinor: plan.priceMinor,
-        txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
-      }),
+      amountLabel: formatPlanPrice(plan.priceMinor, plan.currency),
+      methodLabel: paymentConfig.methodLabel,
+      instructionsHint: paymentConfig.instructionsHint,
+      pixCode:
+        paymentConfig.method === "pix"
+          ? buildPixCopyPaste({
+              pixKey: paymentConfig.paymentCode,
+              merchantName: process.env.PIX_MERCHANT_NAME ?? PRODUCT_NAME,
+              merchantCity: process.env.PIX_MERCHANT_CITY ?? "Sao Paulo",
+              amountMinor: plan.priceMinor,
+              txid: gate.subscriptionId.replace(/-/g, "").slice(0, 25),
+            })
+          : paymentConfig.paymentCode,
       whatsappLink: paymentReportMessage({
-        companyWhatsappPhone: companyWhatsapp,
+        companyWhatsappPhone: paymentConfig.companyWhatsapp,
         barbershopName,
         planName: plan.name,
       }),
@@ -65,10 +70,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         />
       );
     }
-    // PIX_KEY/COMPANY_WHATSAPP_NUMBER ausentes, ou nenhum plano ativo: não
-    // trava o cliente por uma falha de configuração ou dado nossa — loga
+    // Configuração de pagamento ausente para o país, ou nenhum plano ativo:
+    // não trava o cliente por uma falha de configuração ou dado nossa — loga
     // alto e deixa passar.
-    console.error("[billing-gate] cobrança bloqueada mas faltou config (PIX_KEY/COMPANY_WHATSAPP_NUMBER) ou plano ativo");
+    console.error(
+      `[billing-gate] cobrança bloqueada mas faltou config de pagamento pro país ${session.barbershopCountry} ou plano ativo`
+    );
   }
 
   // Lembrete não-bloqueante: aparece nos últimos dias do período pago (trial

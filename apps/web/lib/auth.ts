@@ -43,6 +43,7 @@ export interface ActiveSession {
   barbershopId: string;
   barbershopName: string;
   barbershopSlug: string;
+  barbershopCountry: string;
   membership: Membership;
 }
 
@@ -119,6 +120,7 @@ export const getSession = cache(async (): Promise<ActiveSession | null> => {
     barbershopId: membership.barbershopId,
     barbershopName: membership.barbershop.name,
     barbershopSlug: membership.barbershop.slug,
+    barbershopCountry: membership.barbershop.country,
     membership: {
       role: membership.role,
       status: membership.status,

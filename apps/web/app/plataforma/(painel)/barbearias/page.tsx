@@ -1,12 +1,9 @@
 import { prisma } from "@barber/db";
-import { subscriptionGrantsAccess } from "@barber/domain";
-import { requireAdminSession } from "@/lib/platform-admin-auth";
+import { formatPlanPrice, subscriptionGrantsAccess } from "@barber/domain";
+import { countryFilter, requireAdminSession } from "@/lib/platform-admin-auth";
 import { confirmPayment } from "./actions";
 
 export const dynamic = "force-dynamic";
-
-const money = (minor: number) =>
-  (minor / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const dateLabel = (date: Date | null) =>
   date ? date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
@@ -19,12 +16,15 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default async function PlatformAdminBarbershopsPage() {
-  await requireAdminSession();
+  const adminSession = await requireAdminSession();
 
   const subscriptions = await prisma.subscription.findMany({
+    where: {
+      barbershop: { country: countryFilter(adminSession) },
+    },
     include: {
-      barbershop: { select: { name: true, slug: true, createdAt: true } },
-      plan: { select: { name: true, priceMinor: true } },
+      barbershop: { select: { name: true, slug: true, createdAt: true, country: true } },
+      plan: { select: { name: true, priceMinor: true, currency: true } },
     },
     // Postgres põe NULL por último em DESC: quem avisou que pagou sobe pro topo.
     orderBy: [{ paymentReportedAt: "desc" }, { currentPeriodEnd: "asc" }],
@@ -90,7 +90,8 @@ export default async function PlatformAdminBarbershopsPage() {
                   <div className="min-w-0">
                     <p className="font-medium text-ink">{subscription.barbershop.name}</p>
                     <p className="text-xs text-ink-secondary">
-                      /{subscription.barbershop.slug} · cliente desde {dateLabel(subscription.barbershop.createdAt)}
+                      /{subscription.barbershop.slug} · {subscription.barbershop.country} · cliente desde{" "}
+                      {dateLabel(subscription.barbershop.createdAt)}
                     </p>
                   </div>
 
@@ -98,7 +99,8 @@ export default async function PlatformAdminBarbershopsPage() {
                     <div>
                       <p className="text-xs text-ink-secondary">Plano</p>
                       <p className="text-ink">
-                        {subscription.plan.name} · {money(subscription.plan.priceMinor)}
+                        {subscription.plan.name} ·{" "}
+                        {formatPlanPrice(subscription.plan.priceMinor, subscription.plan.currency)}
                       </p>
                     </div>
                     <div>

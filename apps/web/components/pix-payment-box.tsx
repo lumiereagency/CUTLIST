@@ -1,10 +1,11 @@
 "use client";
 
-// Bloco de pagamento Pix reutilizado em dois lugares: o bloqueio total
+// Bloco de pagamento reutilizado em dois lugares: o bloqueio total
 // (BillingPaywall) e o lembrete não-bloqueante de vencimento próximo
-// (RenewalReminderBanner). A lógica é a mesma nos dois: mostrar o código,
-// deixar copiar, e abrir o WhatsApp da equipe + registrar o aviso quando a
-// pessoa diz que já pagou.
+// (RenewalReminderBanner). A lógica é a mesma em qualquer país: mostrar o
+// código (Pix no Brasil, Alias no Paraguai/Uruguai), deixar copiar, e abrir
+// o WhatsApp de quem recebe + registrar o aviso quando a pessoa diz que já
+// pagou (Marco 7 generalizou isto — antes só existia Pix).
 
 import { useState, useTransition } from "react";
 import { Check, Copy } from "lucide-react";
@@ -14,7 +15,12 @@ export interface PixPaymentPlan {
   code: string;
   name: string;
   amountLabel: string;
+  /// Payload Pix (BR) ou Alias cru (PY/UY) — o que a pessoa copia/cola.
   pixCode: string;
+  /// "Pix copia e cola" ou "Alias (celular)" — rótulo mostrado acima do código.
+  methodLabel: string;
+  /// Instrução específica do método (onde colar, o que digitar).
+  instructionsHint: string;
   whatsappLink: string;
 }
 
@@ -54,7 +60,7 @@ export function PixPaymentBox({ plan, alreadyReported }: { plan: PixPaymentPlan;
   return (
     <div>
       <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-secondary">
-        Pix copia e cola · {plan.name} · {plan.amountLabel}
+        {plan.methodLabel} · {plan.name} · {plan.amountLabel}
       </p>
       <div className="flex items-stretch gap-2">
         <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-xl border border-line-subtle bg-surface-2 px-3 py-2.5 text-xs text-ink">
@@ -63,16 +69,14 @@ export function PixPaymentBox({ plan, alreadyReported }: { plan: PixPaymentPlan;
         <button
           type="button"
           onClick={copiarCodigo}
-          aria-label="Copiar código Pix"
-          title="Copiar código Pix"
+          aria-label={`Copiar ${plan.methodLabel}`}
+          title={`Copiar ${plan.methodLabel}`}
           className="flex w-11 shrink-0 items-center justify-center rounded-xl border border-line-subtle bg-surface-2 text-ink-secondary hover:text-ink"
         >
           {copiado ? <Check size={17} strokeWidth={2} className="text-success" /> : <Copy size={17} strokeWidth={1.9} />}
         </button>
       </div>
-      <p className="mt-1.5 text-xs text-ink-muted">
-        Cole esse código na opção "Pix Copia e Cola" do seu banco. O valor já vem certo.
-      </p>
+      <p className="mt-1.5 text-xs text-ink-muted">{plan.instructionsHint}</p>
 
       <button
         type="button"
@@ -80,7 +84,7 @@ export function PixPaymentBox({ plan, alreadyReported }: { plan: PixPaymentPlan;
         disabled={isPending}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-gradient px-4 py-3 font-semibold text-white transition-opacity hover:opacity-95 disabled:opacity-60"
       >
-        {avisado ? `Avisar de novo — plano ${plan.name}` : `Já fiz o Pix do plano ${plan.name}`}
+        {avisado ? `Avisar de novo — plano ${plan.name}` : `Já paguei — plano ${plan.name}`}
       </button>
 
       {avisado ? (

@@ -29,6 +29,9 @@ export interface ActiveAdminSession {
   adminId: string;
   adminName: string;
   adminEmail: string;
+  /// Vazio = vê e confirma pagamento de qualquer país. Preenchido = só os
+  /// países listados (Marco 7 — acesso de um parceiro regional).
+  countryScope: string[];
 }
 
 export async function createAdminSession(adminId: string): Promise<void> {
@@ -80,8 +83,15 @@ export const getAdminSession = cache(async (): Promise<ActiveAdminSession | null
     adminId: session.admin.id,
     adminName: session.admin.name,
     adminEmail: session.admin.email,
+    countryScope: session.admin.countryScope,
   };
 });
+
+/// `undefined` = sem restrição (vê tudo). Usar isto em vez de espalhar
+/// `scope.length === 0 ? undefined : { in: scope }` pelo código todo.
+export function countryFilter(session: ActiveAdminSession): { in: string[] } | undefined {
+  return session.countryScope.length > 0 ? { in: session.countryScope } : undefined;
+}
 
 export async function requireAdminSession(): Promise<ActiveAdminSession> {
   const session = await getAdminSession();
